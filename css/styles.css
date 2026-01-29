@@ -1,0 +1,847 @@
+/* =============================================================================
+   STYLES.CSS - ESTILOS DO SISTEMA RPPS
+   Versão: 1.0.0 - Migração GitHub
+   ============================================================================= */
+
+/* =============================================================================
+   1. CONFIGURAÇÕES BASE E VARIÁVEIS
+   ============================================================================= */
+
+:root {
+    /* Cores Principais */
+    --color-primary: #3b82f6;
+    --color-primary-dark: #2563eb;
+    --color-secondary: #64748b;
+    --color-success: #10b981;
+    --color-warning: #f59e0b;
+    --color-danger: #ef4444;
+    --color-info: #06b6d4;
+    
+    /* Cores de Módulos */
+    --color-receitas: #3b82f6;
+    --color-folha: #eab308;
+    --color-despesas: #f97316;
+    --color-pagamentos: #10b981;
+    --color-irrf: #ec4899;
+    --color-consignados: #14b8a6;
+    --color-prev: #8b5cf6;
+    --color-margem: #6366f1;
+    --color-arquivos: #06b6d4;
+    
+    /* Sombras */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    
+    /* Transições */
+    --transition-fast: 150ms ease;
+    --transition-normal: 300ms ease;
+    --transition-slow: 500ms ease;
+}
+
+/* =============================================================================
+   2. RESET E ESTILOS GLOBAIS
+   ============================================================================= */
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar Customizada */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Seleção de Texto */
+::selection {
+    background-color: #3b82f6;
+    color: white;
+}
+
+/* =============================================================================
+   3. COMPONENTES - MENU LATERAL
+   ============================================================================= */
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #94a3b8;
+    transition: all var(--transition-fast);
+    text-align: left;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    width: 100%;
+}
+
+.menu-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #e2e8f0;
+}
+
+.menu-item.active {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.menu-item.active i {
+    color: white;
+}
+
+/* =============================================================================
+   4. COMPONENTES - INPUTS E FORMULÁRIOS
+   ============================================================================= */
+
+.input-padrao {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    color: #334155;
+    background-color: white;
+    transition: all var(--transition-fast);
+}
+
+.input-padrao:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.input-padrao:disabled {
+    background-color: #f8fafc;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+.input-padrao::placeholder {
+    color: #94a3b8;
+}
+
+.label-padrao {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 0.375rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+/* Textarea */
+textarea.input-padrao {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Select */
+select.input-padrao {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+}
+
+/* Checkbox e Radio */
+input[type="checkbox"],
+input[type="radio"] {
+    accent-color: #3b82f6;
+}
+
+/* =============================================================================
+   5. COMPONENTES - BOTÕES
+   ============================================================================= */
+
+.btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.625rem 1.25rem;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-radius: 0.5rem;
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+    transform: translateY(-1px);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.625rem 1.25rem;
+    background: white;
+    color: #475569;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-radius: 0.5rem;
+    border: 1px solid #e2e8f0;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.btn-secondary:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.btn-danger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.625rem 1.25rem;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-radius: 0.5rem;
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+}
+
+.btn-danger:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    box-shadow: 0 4px 8px rgba(239, 68, 68, 0.4);
+}
+
+.btn-success {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.625rem 1.25rem;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-radius: 0.5rem;
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+/* Botão pequeno */
+.btn-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+}
+
+/* Botão grande */
+.btn-lg {
+    padding: 0.875rem 1.75rem;
+    font-size: 1rem;
+}
+
+/* =============================================================================
+   6. COMPONENTES - CARDS
+   ============================================================================= */
+
+.card {
+    background: white;
+    border-radius: 1rem;
+    border: 1px solid #e2e8f0;
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+
+.card-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.card-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+
+/* =============================================================================
+   7. COMPONENTES - TABELAS
+   ============================================================================= */
+
+.table-container {
+    overflow-x: auto;
+    border-radius: 0.75rem;
+    border: 1px solid #e2e8f0;
+}
+
+.table-padrao {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.table-padrao thead {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+}
+
+.table-padrao thead th {
+    padding: 0.875rem 1rem;
+    text-align: left;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #94a3b8;
+    white-space: nowrap;
+}
+
+.table-padrao tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+    transition: background-color var(--transition-fast);
+}
+
+.table-padrao tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+.table-padrao tbody td {
+    padding: 0.875rem 1rem;
+    color: #334155;
+}
+
+.table-padrao tfoot {
+    background: #f8fafc;
+    font-weight: 600;
+}
+
+.table-padrao tfoot td {
+    padding: 0.875rem 1rem;
+}
+
+/* =============================================================================
+   8. COMPONENTES - BADGES DE STATUS
+   ============================================================================= */
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.625rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.status-pendente {
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fcd34d;
+}
+
+.status-pago {
+    background-color: #d1fae5;
+    color: #065f46;
+    border: 1px solid #6ee7b7;
+}
+
+.status-parcial {
+    background-color: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #93c5fd;
+}
+
+.status-atrasado {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+.status-cancelado {
+    background-color: #f3f4f6;
+    color: #6b7280;
+    border: 1px solid #d1d5db;
+}
+
+/* =============================================================================
+   9. COMPONENTES - AUTOCOMPLETE
+   ============================================================================= */
+
+.autocomplete-container {
+    position: relative;
+}
+
+.autocomplete-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-top: none;
+    border-radius: 0 0 0.5rem 0.5rem;
+    box-shadow: var(--shadow-lg);
+    z-index: 50;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.autocomplete-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.autocomplete-item:last-child {
+    border-bottom: none;
+}
+
+.autocomplete-item:hover {
+    background-color: #f0f9ff;
+}
+
+.autocomplete-item strong {
+    color: #1e293b;
+}
+
+/* =============================================================================
+   10. COMPONENTES - TABS / NAVEGAÇÃO INTERNA
+   ============================================================================= */
+
+.tabs-container {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: #f1f5f9;
+    border-radius: 0.75rem;
+    overflow-x: auto;
+}
+
+.tab-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #64748b;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all var(--transition-fast);
+}
+
+.tab-btn:hover {
+    background: white;
+    color: #334155;
+}
+
+.tab-btn.active {
+    background: white;
+    color: #3b82f6;
+    box-shadow: var(--shadow-sm);
+}
+
+/* =============================================================================
+   11. ANIMAÇÕES
+   ============================================================================= */
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.animate-fade-in {
+    animation: fadeIn var(--transition-normal) ease-out;
+}
+
+.animate-slide-up {
+    animation: slideInUp var(--transition-normal) ease-out;
+}
+
+.animate-slide-down {
+    animation: slideInDown var(--transition-normal) ease-out;
+}
+
+.animate-scale-in {
+    animation: scaleIn var(--transition-normal) ease-out;
+}
+
+.animate-modal-in {
+    animation: scaleIn 0.2s ease-out, fadeIn 0.2s ease-out;
+}
+
+/* =============================================================================
+   12. PÁGINAS - TRANSIÇÕES
+   ============================================================================= */
+
+.page-content {
+    display: none;
+    animation: fadeIn var(--transition-normal) ease-out;
+}
+
+.page-content.active {
+    display: block;
+}
+
+/* =============================================================================
+   13. RESPONSIVIDADE
+   ============================================================================= */
+
+/* Mobile First - Ajustes para telas pequenas */
+@media (max-width: 640px) {
+    .input-padrao {
+        font-size: 16px; /* Evita zoom no iOS */
+    }
+    
+    .table-padrao {
+        font-size: 0.75rem;
+    }
+    
+    .table-padrao thead th,
+    .table-padrao tbody td {
+        padding: 0.625rem 0.5rem;
+    }
+    
+    .btn-primary,
+    .btn-secondary,
+    .btn-danger,
+    .btn-success {
+        padding: 0.75rem 1rem;
+        width: 100%;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+}
+
+/* Tablets */
+@media (min-width: 641px) and (max-width: 1024px) {
+    .page-content {
+        padding: 1rem;
+    }
+}
+
+/* Desktop */
+@media (min-width: 1025px) {
+    /* Estilos específicos para desktop se necessário */
+}
+
+/* =============================================================================
+   14. ESTILOS DE IMPRESSÃO
+   ============================================================================= */
+
+@media print {
+    /* Oculta elementos não imprimíveis */
+    #sidebar,
+    header,
+    #loading,
+    #modalAlerta,
+    #modalPagamento,
+    #sidebarOverlay,
+    .no-print,
+    button:not(.print-visible),
+    .btn-primary,
+    .btn-secondary {
+        display: none !important;
+    }
+    
+    /* Reset de layout */
+    body {
+        background: white !important;
+        font-size: 11pt;
+        line-height: 1.4;
+    }
+    
+    main {
+        margin-left: 0 !important;
+        padding: 0 !important;
+    }
+    
+    #page-container {
+        padding: 0 !important;
+    }
+    
+    .page-content {
+        display: block !important;
+        padding: 0 !important;
+    }
+    
+    /* Configuração de página */
+    @page {
+        size: A4 landscape;
+        margin: 15mm 10mm;
+    }
+    
+    /* Tabelas */
+    .table-padrao {
+        font-size: 9pt;
+        border-collapse: collapse;
+    }
+    
+    .table-padrao thead {
+        background: #1e293b !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    
+    .table-padrao thead th {
+        color: white !important;
+        padding: 8px 6px;
+    }
+    
+    .table-padrao tbody td {
+        padding: 6px;
+        border: 1px solid #cbd5e1;
+    }
+    
+    /* Quebra de página */
+    .page-break-before {
+        page-break-before: always;
+    }
+    
+    .page-break-after {
+        page-break-after: always;
+    }
+    
+    .page-break-inside-avoid {
+        page-break-inside: avoid;
+    }
+    
+    /* Cards em impressão */
+    .card {
+        box-shadow: none;
+        border: 1px solid #e2e8f0;
+    }
+}
+
+/* =============================================================================
+   15. UTILITÁRIOS EXTRAS
+   ============================================================================= */
+
+/* Truncate texto */
+.truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Line clamp */
+.line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Fonte mono */
+.font-mono {
+    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+}
+
+/* Drag and Drop Area */
+.drop-zone {
+    border: 2px dashed #cbd5e1;
+    border-radius: 1rem;
+    padding: 2rem;
+    text-align: center;
+    transition: all var(--transition-fast);
+    cursor: pointer;
+}
+
+.drop-zone:hover,
+.drop-zone.drag-over {
+    border-color: #3b82f6;
+    background-color: #eff6ff;
+}
+
+.drop-zone.drag-over {
+    transform: scale(1.02);
+}
+
+/* Skeleton Loading */
+.skeleton {
+    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 0.375rem;
+}
+
+@keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Tooltip simples */
+[data-tooltip] {
+    position: relative;
+}
+
+[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0.5rem 0.75rem;
+    background: #1e293b;
+    color: white;
+    font-size: 0.75rem;
+    border-radius: 0.375rem;
+    white-space: nowrap;
+    z-index: 100;
+    margin-bottom: 0.5rem;
+}
+
+/* Focus visible */
+:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+/* Disabled state global */
+[disabled],
+.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Sticky header para tabelas */
+.sticky-header thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+/* Máscara de moeda - visual feedback */
+.mask-money:focus {
+    text-align: right;
+}
+
+/* Status indicator dot */
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.status-dot.online {
+    background-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+.status-dot.offline {
+    background-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+}
+
+.status-dot.pending {
+    background-color: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+}
