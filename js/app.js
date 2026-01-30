@@ -1,6 +1,6 @@
 // =============================================================================
 // APP.JS - CORE DO SISTEMA RPPS
-// Versão: 1.0.0 - Migração GitHub
+// Versão: 2.0.0 - Migração GitHub - CORRIGIDO
 // =============================================================================
 
 // --- Configuração da API ---
@@ -17,19 +17,10 @@ let paginaAtual = 'page-dashboard';
 function initSistema() {
     console.log('🚀 Inicializando Sistema RPPS...');
     
-    // Define data atual no header
     atualizarDataHeader();
-    
-    // Carrega configurações iniciais
     carregarConfiguracoes();
-    
-    // Carrega página inicial (Dashboard)
     carregarPagina('page-dashboard');
-    
-    // Configura máscaras de input
     configurarMascaras();
-    
-    // Inicializa competência atual nos inputs
     inicializarCompetencias();
     
     console.log('✅ Sistema inicializado com sucesso!');
@@ -60,17 +51,10 @@ function inicializarCompetencias() {
     const dataAtual = new Date();
     const mesAtualFmt = dataAtual.getFullYear() + '-' + String(dataAtual.getMonth() + 1).padStart(2, '0');
     
-    // Lista de IDs de inputs de competência
     const inputsCompetencia = [
-        'inputCompetenciaRec',
-        'inputCompetenciaIR',
-        'inputCompetenciaPrev',
-        'inputCompetenciaConsig',
-        'inputCompetenciaFolha',
-        'inputCompetenciaDespesa',
-        'inputCompetenciaOutroBanco',
-        'inputCompetenciaMargem',
-        'filtroCompetenciaOutrosBancos'
+        'inputCompetenciaRec', 'inputCompetenciaIR', 'inputCompetenciaPrev',
+        'inputCompetenciaConsig', 'inputCompetenciaFolha', 'inputCompetenciaDespesa',
+        'inputCompetenciaOutroBanco', 'inputCompetenciaMargem', 'filtroCompetenciaOutrosBancos'
     ];
     
     inputsCompetencia.forEach(function(id) {
@@ -88,20 +72,11 @@ function carregarConfiguracoes() {
         if (config) {
             configCache = config;
             
-            // Atualiza sidebar
             const sidebarNome = document.getElementById('sidebarNome');
             const sidebarCnpj = document.getElementById('sidebarCnpj');
             
             if (sidebarNome) sidebarNome.innerText = config.nome || 'Instituto de Previdência';
             if (sidebarCnpj) sidebarCnpj.innerText = config.cnpj ? 'CNPJ: ' + config.cnpj : '';
-            
-            // Se tiver logo, atualiza
-            if (config.logoUrl) {
-                const sidebarLogo = document.getElementById('sidebarLogo');
-                if (sidebarLogo) {
-                    sidebarLogo.innerHTML = '<img src="' + config.logoUrl + '" alt="Logo" class="h-full w-full object-contain">';
-                }
-            }
         }
     });
 }
@@ -110,10 +85,7 @@ function buscarConfiguracoes(callback) {
     if (configCache) {
         callback(configCache);
     } else {
-        apiGet('getConfiguracoes', function(config) {
-            configCache = config;
-            callback(config);
-        });
+        apiGet('getConfiguracoes', callback);
     }
 }
 
@@ -125,24 +97,16 @@ function carregarPagina(pagina) {
     console.log('📄 Carregando página:', pagina);
     
     paginaAtual = pagina;
-    
-    // Atualiza menu ativo
     atualizarMenuAtivo(pagina);
-    
-    // Fecha sidebar mobile
     closeSidebar();
     
-    // Carrega conteúdo da página
     const container = document.getElementById('pageContainer');
     if (!container) return;
     
-    // Loading
     container.innerHTML = '<div class="flex items-center justify-center h-64"><div class="text-center"><i class="fa-solid fa-circle-notch fa-spin text-4xl text-blue-500 mb-4"></i><p class="text-slate-500">Carregando...</p></div></div>';
     
-    // Mapeia página para arquivo
     const arquivo = 'pages/' + pagina + '.html';
     
-    // Carrega via fetch
     fetch(arquivo)
         .then(function(response) {
             if (!response.ok) throw new Error('Página não encontrada');
@@ -150,8 +114,6 @@ function carregarPagina(pagina) {
         })
         .then(function(html) {
             container.innerHTML = html;
-            
-            // Executa inicialização específica da página
             inicializarPagina(pagina);
         })
         .catch(function(error) {
@@ -163,10 +125,8 @@ function carregarPagina(pagina) {
 function inicializarPagina(pagina) {
     console.log('⚙️ Inicializando:', pagina);
     
-    // Reinicializa competências
     inicializarCompetencias();
     
-    // Inicialização específica por página
     switch (pagina) {
         case 'page-dashboard':
             if (typeof popularFiltroAnosDashboard === 'function') popularFiltroAnosDashboard();
@@ -174,48 +134,41 @@ function inicializarPagina(pagina) {
             break;
             
         case 'page-recolhimento':
-            if (typeof carregarRecursos === 'function') carregarRecursos();
-            if (typeof carregarHistoricoGuias === 'function') carregarHistoricoGuias();
+            if (typeof switchRecView === 'function') switchRecView('operacional');
             break;
             
         case 'page-imposto-renda':
-            if (typeof carregarOrigensIR === 'function') carregarOrigensIR();
-            if (typeof carregarHistoricoIR === 'function') carregarHistoricoIR();
+            if (typeof switchIRView === 'function') switchIRView('operacional');
             break;
             
         case 'page-prev-municipal':
-            if (typeof carregarOrigensPrev === 'function') carregarOrigensPrev();
-            if (typeof carregarHistoricoPrev === 'function') carregarHistoricoPrev();
+            if (typeof switchPrevView === 'function') switchPrevView('operacional');
             break;
             
         case 'page-consignados':
-            if (typeof carregarBancosConsig === 'function') carregarBancosConsig();
-            if (typeof carregarHistoricoConsig === 'function') carregarHistoricoConsig();
+            if (typeof switchConsigView === 'function') switchConsigView('operacional');
             break;
             
         case 'page-folha':
-            if (typeof carregarNomesFolha === 'function') carregarNomesFolha();
-            if (typeof carregarHistoricoFolha === 'function') carregarHistoricoFolha();
+            if (typeof switchFolhaView === 'function') switchFolhaView('operacional');
             break;
             
         case 'page-despesas':
-            if (typeof carregarFornecedoresSelect === 'function') carregarFornecedoresSelect();
-            if (typeof carregarHistoricoDespesas === 'function') carregarHistoricoDespesas();
+            if (typeof switchDespesasView === 'function') switchDespesasView('operacional');
             break;
             
         case 'page-pagamentos':
             if (typeof popularFiltroAnosPendentes === 'function') popularFiltroAnosPendentes();
             if (typeof popularFiltroAnosHistorico === 'function') popularFiltroAnosHistorico();
-            if (typeof carregarPagamentosPendentes === 'function') carregarPagamentosPendentes();
+            if (typeof switchPagamentosView === 'function') switchPagamentosView('pendentes');
             break;
             
         case 'page-margem':
-            if (typeof carregarServidoresAutocompleteCalc === 'function') carregarServidoresAutocompleteCalc();
-            if (typeof carregarHistoricoMargem === 'function') carregarHistoricoMargem();
+            if (typeof switchMargemView === 'function') switchMargemView('calculadora');
             break;
             
         case 'page-arquivos':
-            if (typeof carregarTiposArquivo === 'function') carregarTiposArquivo('selectTipoArquivo');
+            if (typeof switchArquivosView === 'function') switchArquivosView('upload');
             if (typeof popularFiltroAnosArquivos === 'function') popularFiltroAnosArquivos();
             break;
             
@@ -232,17 +185,14 @@ function inicializarPagina(pagina) {
             break;
     }
     
-    // Reconfigura máscaras após carregar página
     setTimeout(configurarMascaras, 100);
 }
 
 function atualizarMenuAtivo(pagina) {
-    // Remove classe ativa de todos os itens
     document.querySelectorAll('.menu-item').forEach(function(item) {
         item.classList.remove('menu-item-active');
     });
     
-    // Adiciona classe ativa ao item atual
     const menuItem = document.querySelector('.menu-item[data-page="' + pagina + '"]');
     if (menuItem) {
         menuItem.classList.add('menu-item-active');
@@ -301,7 +251,6 @@ function sysAlert(titulo, mensagem, tipo) {
     const mensagemEl = document.getElementById('alertaMensagem');
     const botoesEl = document.getElementById('alertaBotoes');
     
-    // Define cores e ícones por tipo
     let headerClass = 'bg-blue-50';
     let iconBgClass = 'bg-blue-100';
     let iconClass = 'fa-circle-info text-blue-600';
@@ -320,19 +269,15 @@ function sysAlert(titulo, mensagem, tipo) {
         iconClass = 'fa-triangle-exclamation text-amber-600';
     }
     
-    // Aplica estilos
     header.className = 'px-6 py-4 flex items-center gap-3 ' + headerClass;
     iconContainer.className = 'h-10 w-10 rounded-full flex items-center justify-center ' + iconBgClass;
     icon.className = 'fa-solid ' + iconClass + ' text-xl';
     
-    // Define conteúdo
     tituloEl.innerText = titulo;
     mensagemEl.innerText = mensagem;
     
-    // Botão padrão
     botoesEl.innerHTML = '<button onclick="fecharAlerta()" class="flex-1 bg-slate-800 hover:bg-slate-900 text-white py-2.5 px-4 rounded-xl font-bold transition">OK</button>';
     
-    // Mostra modal
     modal.classList.remove('hidden');
 }
 
@@ -345,27 +290,22 @@ function sysConfirm(titulo, mensagem, onConfirm) {
     const mensagemEl = document.getElementById('alertaMensagem');
     const botoesEl = document.getElementById('alertaBotoes');
     
-    // Estilo de confirmação
     header.className = 'px-6 py-4 flex items-center gap-3 bg-blue-50';
     iconContainer.className = 'h-10 w-10 rounded-full flex items-center justify-center bg-blue-100';
     icon.className = 'fa-solid fa-circle-question text-blue-600 text-xl';
     
-    // Define conteúdo
     tituloEl.innerText = titulo;
     mensagemEl.innerText = mensagem;
     
-    // Botões de confirmação
     botoesEl.innerHTML = 
         '<button onclick="fecharAlerta()" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 py-2.5 px-4 rounded-xl font-bold transition">Cancelar</button>' +
         '<button id="btnConfirmAction" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 px-4 rounded-xl font-bold transition">Confirmar</button>';
     
-    // Evento de confirmação
     document.getElementById('btnConfirmAction').onclick = function() {
         fecharAlerta();
         if (typeof onConfirm === 'function') onConfirm();
     };
     
-    // Mostra modal
     modal.classList.remove('hidden');
 }
 
@@ -393,12 +333,8 @@ function apiGet(action, callback, params) {
     }
     
     fetch(url)
-        .then(function(response) {
-            return response.json();
-        })
-        .then(function(data) {
-            if (typeof callback === 'function') callback(data);
-        })
+        .then(function(response) { return response.json(); })
+        .then(function(data) { if (typeof callback === 'function') callback(data); })
         .catch(function(error) {
             console.error('Erro na API (GET):', error);
             if (typeof callback === 'function') callback(null);
@@ -406,26 +342,15 @@ function apiGet(action, callback, params) {
 }
 
 function apiPost(action, dados, callback) {
-    const url = API_BASE_URL;
+    const payload = { action: action, dados: dados };
     
-    const payload = {
-        action: action,
-        dados: dados
-    };
-    
-    fetch(url, {
+    fetch(API_BASE_URL, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
     })
-        .then(function(response) {
-            return response.json();
-        })
-        .then(function(data) {
-            if (typeof callback === 'function') callback(data);
-        })
+        .then(function(response) { return response.json(); })
+        .then(function(data) { if (typeof callback === 'function') callback(data); })
         .catch(function(error) {
             console.error('Erro na API (POST):', error);
             if (typeof callback === 'function') callback({ success: false, message: 'Erro de conexão' });
@@ -433,115 +358,86 @@ function apiPost(action, dados, callback) {
 }
 
 // =============================================================================
-// COMPATIBILIDADE COM google.script.run
+// COMPATIBILIDADE COM google.script.run (PROXY DINÂMICO)
 // =============================================================================
 
 const google = {
     script: {
-        run: {
-            withSuccessHandler: function(callback) {
-                return {
-                    withFailureHandler: function(errorCallback) {
-                        return criarProxyAPI(callback, errorCallback);
-                    },
-                    // Métodos diretos (sem withFailureHandler)
-                    ...criarProxyAPI(callback, function(err) { console.error(err); })
-                };
+        run: new Proxy({}, {
+            get: function(target, prop) {
+                if (prop === 'withSuccessHandler') {
+                    return function(successCallback) {
+                        return new Proxy({}, {
+                            get: function(t, funcName) {
+                                if (funcName === 'withFailureHandler') {
+                                    return function(errorCallback) {
+                                        return criarHandlerFuncoes(successCallback, errorCallback);
+                                    };
+                                }
+                                // Chamada direta sem withFailureHandler
+                                return function() {
+                                    const args = Array.prototype.slice.call(arguments);
+                                    executarFuncaoAPI(funcName, args, successCallback, console.error);
+                                };
+                            }
+                        });
+                    };
+                }
+                return undefined;
             }
-        }
+        })
     }
 };
 
-function criarProxyAPI(successCallback, errorCallback) {
-    const handler = {};
-    
-    // Lista de todas as funções do backend
-    const funcoes = [
-        // Configurações
-        'getConfiguracoes', 'buscarConfiguracoes', 'salvarConfiguracoes',
-        // Recursos
-        'getRecursos', 'addRecurso', 'removeRecurso',
-        // Recolhimento
-        'buscarGuias', 'salvarGuia', 'excluirGuia',
-        // IRRF
-        'getOrigensIR', 'addOrigemIR', 'removeOrigemIR',
-        'buscarIRRF', 'salvarIRRF', 'excluirIRRF',
-        // Previdência
-        'getOrigensPrev', 'addOrigemPrev', 'removeOrigemPrev',
-        'buscarPrevMunicipal', 'salvarPrevMunicipal', 'excluirPrevMunicipal',
-        // Consignados
-        'getBancosConsig', 'addBancoConsig', 'removeBancoConsig',
-        'buscarConsignados', 'salvarConsignado', 'excluirConsignado',
-        // Folha
-        'getNomesFolha', 'addNomeFolha', 'removeNomeFolha',
-        'buscarFolhas', 'salvarFolha', 'excluirFolha',
-        'buscarTodosServidores', 'buscarRemessasOutrosBancos', 
-        'salvarRemessaOutroBanco', 'excluirRemessaOutroBanco', 'importarRemessasAnteriores',
-        // Despesas
-        'buscarFornecedores', 'salvarFornecedor', 'excluirFornecedor',
-        'buscarHistoricoDespesas', 'salvarDespesa', 'editarDespesa', 'excluirDespesa',
-        // Pagamentos
-        'buscarPagamentos', 'processarPagamento', 'processarPagamentoEmLote',
-        'buscarHistoricoPagamentos', 'buscarTodosPagamentosRealizados', 
-        'excluirPagamentoRealizado', 'buscarDetalhesPagamento',
-        // Margem
-        'salvarServidor', 'buscarHistoricoMargem', 'gerarCartaMargem', 'regerarPDFMargem',
-        // Arquivos
-        'getTiposArquivo', 'addTipoArquivo', 'removeTipoArquivo',
-        'buscarArquivosDigitais', 'uploadArquivoDigital', 'excluirArquivoDigital',
-        // Relatórios
-        'gerarRelatorioBI', 'exportarRelatorioParaPlanilha',
-        // Dashboard
-        'carregarDadosDashboard', 'exportarDashboardParaPlanilha',
-        'buscarUltimasTransacoes', 'buscarProximosVencimentos',
-        // Importação
-        'importarDadosEmLote'
-    ];
-    
-    funcoes.forEach(function(funcao) {
-        handler[funcao] = function() {
-            const args = Array.prototype.slice.call(arguments);
-            
-            // Determina se é GET ou POST baseado no nome da função
-            const isPost = funcao.startsWith('salvar') || 
-                          funcao.startsWith('excluir') || 
-                          funcao.startsWith('processar') ||
-                          funcao.startsWith('importar') ||
-                          funcao.startsWith('add') ||
-                          funcao.startsWith('remove') ||
-                          funcao.startsWith('editar') ||
-                          funcao.startsWith('upload') ||
-                          funcao.startsWith('gerar') ||
-                          funcao.startsWith('regerar') ||
-                          funcao.startsWith('exportar');
-            
-            if (isPost) {
-                apiPost(funcao, args[0], function(response) {
-                    if (response && response.success !== undefined) {
-                        successCallback(response);
-                    } else if (response && response.error) {
-                        errorCallback(response.error);
-                    } else {
-                        successCallback(response);
-                    }
-                });
-            } else {
-                const params = {};
-                if (args.length > 0) params.param1 = args[0];
-                if (args.length > 1) params.param2 = args[1];
-                
-                apiGet(funcao, function(response) {
-                    if (response !== null) {
-                        successCallback(response);
-                    } else {
-                        errorCallback('Erro ao buscar dados');
-                    }
-                }, params);
-            }
-        };
+function criarHandlerFuncoes(successCallback, errorCallback) {
+    return new Proxy({}, {
+        get: function(target, funcName) {
+            return function() {
+                const args = Array.prototype.slice.call(arguments);
+                executarFuncaoAPI(funcName, args, successCallback, errorCallback);
+            };
+        }
     });
+}
+
+function executarFuncaoAPI(funcName, args, successCallback, errorCallback) {
+    console.log('🔄 API Call:', funcName, args);
     
-    return handler;
+    // Determina se é GET ou POST
+    const isPost = funcName.startsWith('salvar') || 
+                  funcName.startsWith('excluir') || 
+                  funcName.startsWith('processar') ||
+                  funcName.startsWith('importar') ||
+                  funcName.startsWith('add') ||
+                  funcName.startsWith('remove') ||
+                  funcName.startsWith('editar') ||
+                  funcName.startsWith('upload') ||
+                  funcName.startsWith('gerar') ||
+                  funcName.startsWith('regerar') ||
+                  funcName.startsWith('exportar');
+    
+    if (isPost) {
+        apiPost(funcName, args.length > 0 ? args[0] : {}, function(response) {
+            if (response && response.error) {
+                errorCallback(response.error);
+            } else {
+                successCallback(response);
+            }
+        });
+    } else {
+        const params = {};
+        if (args.length > 0 && args[0] !== undefined) params.param1 = args[0];
+        if (args.length > 1 && args[1] !== undefined) params.param2 = args[1];
+        
+        apiGet(funcName, function(response) {
+            if (response !== null) {
+                successCallback(response);
+            } else {
+                // Retorna array vazio em vez de erro para listas
+                successCallback([]);
+            }
+        }, Object.keys(params).length > 0 ? params : undefined);
+    }
 }
 
 // =============================================================================
@@ -557,7 +453,6 @@ function parseMoney(valor) {
     if (!valor) return 0;
     if (typeof valor === 'number') return valor;
     
-    // Remove R$, espaços e pontos de milhar, troca vírgula por ponto
     let limpo = String(valor)
         .replace(/R\$\s?/g, '')
         .replace(/\s/g, '')
@@ -575,14 +470,12 @@ function roundMoney(valor) {
 function formatarCompetencia(comp) {
     if (!comp) return '-';
     
-    // Se for Date
     if (comp instanceof Date) {
         const m = comp.getMonth() + 1;
         const y = comp.getFullYear();
         return String(m).padStart(2, '0') + '/' + y;
     }
     
-    // Se for string YYYY-MM ou YYYY-MM-DD
     const str = String(comp).replace(/'/g, '').trim();
     
     if (str.match(/^\d{4}-\d{2}/)) {
@@ -596,7 +489,6 @@ function formatarCompetencia(comp) {
 function formatarDataBR(data) {
     if (!data) return '-';
     
-    // Se for Date
     if (data instanceof Date) {
         const d = String(data.getDate()).padStart(2, '0');
         const m = String(data.getMonth() + 1).padStart(2, '0');
@@ -604,7 +496,6 @@ function formatarDataBR(data) {
         return d + '/' + m + '/' + y;
     }
     
-    // Se for string ISO
     const str = String(data).trim();
     
     if (str.match(/^\d{4}-\d{2}-\d{2}/)) {
@@ -622,10 +513,12 @@ function formatarDataBR(data) {
 function configurarMascaras() {
     // Máscara de dinheiro
     document.querySelectorAll('.mask-money').forEach(function(input) {
+        if (input.dataset.maskApplied) return;
+        input.dataset.maskApplied = 'true';
+        
         input.addEventListener('input', function(e) {
             let valor = e.target.value.replace(/\D/g, '');
-            valor = (parseInt(valor) / 100).toFixed(2);
-            if (isNaN(valor) || valor === 'NaN') valor = '0.00';
+            valor = (parseInt(valor || '0') / 100).toFixed(2);
             e.target.value = formatMoney(parseFloat(valor));
         });
         
@@ -640,6 +533,9 @@ function configurarMascaras() {
     
     // Máscara de CPF
     document.querySelectorAll('.mask-cpf').forEach(function(input) {
+        if (input.dataset.maskApplied) return;
+        input.dataset.maskApplied = 'true';
+        
         input.addEventListener('input', function(e) {
             let valor = e.target.value.replace(/\D/g, '');
             if (valor.length > 11) valor = valor.substring(0, 11);
@@ -658,6 +554,9 @@ function configurarMascaras() {
     
     // Máscara de CNPJ
     document.querySelectorAll('.mask-cnpj').forEach(function(input) {
+        if (input.dataset.maskApplied) return;
+        input.dataset.maskApplied = 'true';
+        
         input.addEventListener('input', function(e) {
             let valor = e.target.value.replace(/\D/g, '');
             if (valor.length > 14) valor = valor.substring(0, 14);
@@ -678,6 +577,9 @@ function configurarMascaras() {
     
     // Máscara de telefone
     document.querySelectorAll('.mask-telefone').forEach(function(input) {
+        if (input.dataset.maskApplied) return;
+        input.dataset.maskApplied = 'true';
+        
         input.addEventListener('input', function(e) {
             let valor = e.target.value.replace(/\D/g, '');
             if (valor.length > 11) valor = valor.substring(0, 11);
@@ -700,20 +602,19 @@ function configurarMascaras() {
 // =============================================================================
 
 function carregarDadosConfig() {
-    // Carrega configurações do instituto
     buscarConfiguracoes(function(config) {
         if (config) {
-            document.getElementById('configNomeInstituto').value = config.nome || '';
-            document.getElementById('configCnpjInstituto').value = config.cnpj || '';
-            document.getElementById('configEnderecoInstituto').value = config.endereco || '';
-            document.getElementById('configCidadeInstituto').value = config.cidade || '';
-            document.getElementById('configUfInstituto').value = config.uf || '';
-            document.getElementById('configTelefoneInstituto').value = config.telefone || '';
-            document.getElementById('configEmailInstituto').value = config.email || '';
+            const campos = ['Nome', 'Cnpj', 'Endereco', 'Cidade', 'Uf', 'Telefone', 'Email'];
+            campos.forEach(function(campo) {
+                const el = document.getElementById('config' + campo + 'Instituto');
+                if (el && config[campo.toLowerCase()]) {
+                    el.value = config[campo.toLowerCase()];
+                }
+            });
         }
     });
     
-    // Carrega listas de cadastros auxiliares
+    // Carrega listas auxiliares
     if (typeof carregarListaRecursos === 'function') carregarListaRecursos();
     if (typeof carregarListaOrigensIR === 'function') carregarListaOrigensIR();
     if (typeof carregarListaNomesFolha === 'function') carregarListaNomesFolha();
@@ -741,7 +642,7 @@ function salvarConfiguracoes(e) {
         
         if (res && res.success) {
             sysAlert('Sucesso', 'Configurações salvas com sucesso!', 'sucesso');
-            configCache = null; // Limpa cache para recarregar
+            configCache = null;
             carregarConfiguracoes();
         } else {
             sysAlert('Erro', res ? res.message : 'Erro ao salvar configurações.', 'erro');
