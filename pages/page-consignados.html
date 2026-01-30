@@ -1,0 +1,116 @@
+<div id="page-consignados" class="space-y-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-black text-slate-800">Consignados</h1>
+            <p class="text-slate-500 text-sm">Repasses de empréstimos consignados</p>
+        </div>
+        <div class="flex items-center gap-2 bg-white rounded-xl p-1 border border-slate-200">
+            <button id="tab-consig-operacional" onclick="switchConsigView('operacional')" class="px-4 py-2 rounded-lg text-sm font-bold transition bg-teal-50 text-teal-700 shadow-sm border border-teal-100">
+                <i class="fa-solid fa-plus mr-2"></i> Operacional
+            </button>
+            <button id="tab-consig-gerencial" onclick="switchConsigView('gerencial')" class="px-4 py-2 rounded-lg text-sm font-bold text-slate-500 hover:bg-slate-50 transition">
+                <i class="fa-solid fa-chart-bar mr-2"></i> Gerencial
+            </button>
+        </div>
+    </div>
+
+    <!-- VIEW OPERACIONAL -->
+    <div id="view-consig-operacional" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="bg-white rounded-xl border border-slate-200 p-6">
+            <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-file-contract text-teal-500"></i> Novo Repasse
+            </h3>
+            <form id="formConsig" onsubmit="handleSaveConsig(event)" class="space-y-4">
+                <input type="hidden" id="idConsigEdicao">
+                
+                <div>
+                    <label class="label-padrao">Competência *</label>
+                    <input type="month" id="inputCompetenciaConsig" name="competencia" class="input-padrao" required>
+                </div>
+                
+                <div>
+                    <label class="label-padrao">Banco / Instituição *</label>
+                    <select id="selectBancoConsig" name="banco" class="input-padrao" required>
+                        <option value="">Selecione...</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="label-padrao">Valor do Repasse *</label>
+                    <input type="text" id="valorConsig" name="valor" class="input-padrao mask-money" placeholder="R$ 0,00" required>
+                </div>
+                
+                <div>
+                    <label class="label-padrao">Data do Repasse</label>
+                    <input type="date" id="inputDataRepasseConsig" name="dataRepasse" class="input-padrao">
+                </div>
+                
+                <div>
+                    <label class="label-padrao">Observações</label>
+                    <textarea id="inputObsConsig" name="observacoes" class="input-padrao" rows="2"></textarea>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button type="submit" id="btnSalvarConsig" class="btn-primary flex-1 bg-teal-600 hover:bg-teal-700">
+                        <i class="fa-solid fa-check mr-2"></i> Lançar Repasse
+                    </button>
+                    <button type="button" id="btnCancelConsig" onclick="cancelarEdicaoConsig()" class="btn-secondary hidden">
+                        Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div class="bg-slate-800 text-white px-5 py-3 flex items-center justify-between">
+                <span class="font-bold">Histórico de Repasses</span>
+                <div class="flex items-center gap-2">
+                    <input type="month" id="filtroHistoricoConsig" onchange="carregarHistoricoConsig()" class="bg-slate-700 border-0 rounded px-2 py-1 text-xs">
+                    <button onclick="limparFiltroHistoricoConsig()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-times"></i></button>
+                </div>
+            </div>
+            <div class="overflow-x-auto max-h-[500px]">
+                <table class="w-full text-sm">
+                    <thead class="bg-slate-100 sticky top-0">
+                        <tr>
+                            <th class="pl-6 py-3 text-left font-bold text-slate-600">Competência</th>
+                            <th class="px-4 py-3 text-left font-bold text-slate-600">Banco</th>
+                            <th class="px-4 py-3 text-right font-bold text-slate-600">Valor</th>
+                            <th class="px-4 py-3 text-center font-bold text-slate-600">Dt. Repasse</th>
+                            <th class="pr-6 py-3 text-center font-bold text-slate-600">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaHistoricoConsig">
+                        <tr><td colspan="5" class="text-center p-8 text-slate-400">Carregando...</td></tr>
+                    </tbody>
+                    <tfoot class="bg-slate-100 border-t-2 border-slate-300">
+                        <tr>
+                            <td colspan="2" class="pl-6 py-3 font-bold text-slate-700">TOTAL</td>
+                            <td id="totalCompConsig" class="px-4 py-3 text-right font-black text-teal-700 font-mono">R$ 0,00</td>
+                            <td colspan="2"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW GERENCIAL -->
+    <div id="view-consig-gerencial" class="hidden">
+        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div class="bg-slate-800 text-white px-5 py-3 flex items-center justify-between">
+                <span class="font-bold">Matriz Anual de Consignados</span>
+                <select id="filtroAnoConsig" onchange="construirMatrizAnualConsig()" class="bg-slate-700 border-0 rounded px-3 py-1 text-sm"></select>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead></thead>
+                    <tbody id="tabelaRelatorioConsig">
+                        <tr><td colspan="14" class="text-center p-12 text-slate-400">Carregando...</td></tr>
+                    </tbody>
+                    <tfoot></tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

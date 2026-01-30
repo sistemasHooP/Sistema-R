@@ -1,0 +1,108 @@
+<div id="page-pagamentos" class="space-y-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-black text-slate-800">Pagamentos</h1>
+            <p class="text-slate-500 text-sm">Central de contas a pagar</p>
+        </div>
+        <div class="flex items-center gap-2 bg-white rounded-xl p-1 border border-slate-200">
+            <button id="tab-pag-pendentes" onclick="switchPagamentosView('pendentes')" class="px-6 py-2 rounded-lg text-sm font-bold transition bg-emerald-50 text-emerald-700 shadow-sm border border-emerald-100">
+                <i class="fa-solid fa-clock mr-2"></i> Pendentes
+            </button>
+            <button id="tab-pag-historico" onclick="switchPagamentosView('historico')" class="px-6 py-2 rounded-lg text-sm font-bold text-slate-500 hover:bg-slate-50 transition">
+                <i class="fa-solid fa-check-double mr-2"></i> Realizados
+            </button>
+        </div>
+    </div>
+
+    <!-- VIEW PENDENTES -->
+    <div id="view-pag-pendentes" class="space-y-6">
+        <!-- KPIs -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-white rounded-xl border border-slate-200 p-5">
+                <p class="text-xs text-slate-500 uppercase font-bold">Total Pendente</p>
+                <p id="kpiTotalPendente" class="text-2xl font-black text-amber-600 font-mono">R$ 0,00</p>
+            </div>
+            <div class="bg-white rounded-xl border border-slate-200 p-5">
+                <p class="text-xs text-slate-500 uppercase font-bold">Quantidade</p>
+                <p id="kpiQtdPendente" class="text-2xl font-black text-slate-700">0</p>
+            </div>
+            <div class="bg-white rounded-xl border border-slate-200 p-5 flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-slate-500 uppercase font-bold">Filtros</p>
+                </div>
+                <div class="flex gap-2">
+                    <select id="filtroAnoPendentes" onchange="carregarPagamentosPendentes()" class="input-padrao text-xs py-1 w-24">
+                        <option value="">Ano</option>
+                    </select>
+                    <select id="filtroTipoPendentes" onchange="carregarPagamentosPendentes()" class="input-padrao text-xs py-1 w-32">
+                        <option value="">Tipo</option>
+                        <option value="GUIA">Guias</option>
+                        <option value="FOLHA">Folhas</option>
+                        <option value="DESPESA">Despesas</option>
+                        <option value="IRRF">IRRF</option>
+                        <option value="CONSIGNADO">Consignados</option>
+                        <option value="PREVIDENCIA">Previdência</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Barra de Ações em Lote -->
+        <div id="barraAcoesLote" class="hidden bg-emerald-600 text-white rounded-xl p-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <input type="checkbox" id="checkboxMaster" onchange="toggleSelectAll()" class="h-5 w-5 rounded">
+                <span><strong id="contadorSelecionados">0</strong> selecionados</span>
+                <span class="text-emerald-200">|</span>
+                <span>Total: <strong id="totalSelecionados">R$ 0,00</strong></span>
+            </div>
+            <button onclick="pagarSelecionados()" class="bg-white text-emerald-700 px-4 py-2 rounded-lg font-bold hover:bg-emerald-50 transition">
+                <i class="fa-solid fa-check-double mr-2"></i> Pagar Selecionados
+            </button>
+        </div>
+
+        <!-- Lista de Pendentes (Cards) -->
+        <div id="listaPagamentosPendentes" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="col-span-full text-center p-12 text-slate-400">
+                <i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2"></i>
+                <br>Carregando pendências...
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW HISTÓRICO -->
+    <div id="view-pag-historico" class="hidden space-y-4">
+        <!-- Filtros -->
+        <div class="bg-white rounded-xl border border-slate-200 p-4 flex flex-wrap items-center gap-4">
+            <div class="flex items-center gap-2">
+                <label class="text-sm font-bold text-slate-600">Ano:</label>
+                <select id="filtroAnoHistorico" onchange="carregarPagamentosRealizados()" class="input-padrao text-sm py-1 w-24"></select>
+            </div>
+            <div class="flex-1">
+                <input type="text" id="buscaHistoricoPag" onkeyup="filtrarHistoricoPagamentos()" class="input-padrao" placeholder="Buscar por descrição...">
+            </div>
+        </div>
+
+        <!-- Tabela -->
+        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div class="bg-slate-800 text-white px-5 py-3">
+                <span class="font-bold">Pagamentos Realizados</span>
+            </div>
+            <div class="overflow-x-auto max-h-[500px]">
+                <table class="w-full text-sm">
+                    <thead class="bg-slate-100 sticky top-0">
+                        <tr>
+                            <th class="pl-6 py-3 text-left font-bold text-slate-600">Data</th>
+                            <th class="px-4 py-3 text-left font-bold text-slate-600">Descrição</th>
+                            <th class="px-4 py-3 text-right font-bold text-slate-600">Valor</th>
+                            <th class="px-4 py-3 text-left font-bold text-slate-600">Usuário</th>
+                            <th class="pr-6 py-3 text-center font-bold text-slate-600">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaPagamentosRealizados">
+                        <tr><td colspan="5" class="text-center p-8 text-slate-400">Carregando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

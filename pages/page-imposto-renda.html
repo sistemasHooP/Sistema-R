@@ -1,0 +1,127 @@
+<div id="page-imposto-renda" class="space-y-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-black text-slate-800">Imposto de Renda</h1>
+            <p class="text-slate-500 text-sm">Gestão de IRRF retido na fonte</p>
+        </div>
+        <div class="flex items-center gap-2 bg-white rounded-xl p-1 border border-slate-200">
+            <button id="tab-ir-operacional" onclick="switchIRView('operacional')" class="px-6 py-2 rounded-lg text-sm font-bold transition bg-pink-50 text-pink-700 shadow-sm border border-pink-100">
+                <i class="fa-solid fa-plus mr-2"></i> Operacional
+            </button>
+            <button id="tab-ir-gerencial" onclick="switchIRView('gerencial')" class="px-6 py-2 rounded-lg text-sm font-bold text-slate-500 hover:bg-slate-50 transition">
+                <i class="fa-solid fa-chart-bar mr-2"></i> Gerencial
+            </button>
+        </div>
+    </div>
+
+    <!-- VIEW OPERACIONAL -->
+    <div id="view-ir-operacional" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="bg-white rounded-xl border border-slate-200 p-6">
+            <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-scale-balanced text-pink-500"></i> Novo Lançamento
+            </h3>
+            <form id="formIR" onsubmit="handleSaveIR(event)" class="space-y-4">
+                <input type="hidden" id="idIRRFEdicao">
+                
+                <div>
+                    <label class="label-padrao">Competência *</label>
+                    <input type="month" id="inputCompetenciaIR" name="competencia" class="input-padrao" required>
+                </div>
+                
+                <div>
+                    <label class="label-padrao">Tipo *</label>
+                    <select id="selectTipoIR" name="tipoIR" class="input-padrao" required>
+                        <option value="">Selecione...</option>
+                        <option value="IRRF Folha">IRRF Folha</option>
+                        <option value="IRRF Autônomos">IRRF Autônomos</option>
+                        <option value="IRRF Outros">IRRF Outros</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="label-padrao">Origem / Fonte *</label>
+                    <select id="selectOrigemIR" name="origem" class="input-padrao" required>
+                        <option value="">Selecione...</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="label-padrao">Valor Retido *</label>
+                    <input type="text" id="valorRetido" name="valorRetido" class="input-padrao mask-money" placeholder="R$ 0,00" required>
+                </div>
+                
+                <div>
+                    <label class="label-padrao">Data do Repasse</label>
+                    <input type="date" id="inputDataRepasse" name="dataRepasse" class="input-padrao">
+                </div>
+                
+                <div>
+                    <label class="label-padrao">Observações</label>
+                    <textarea id="inputObsIR" name="observacoes" class="input-padrao" rows="2"></textarea>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button type="submit" id="btnSalvarIR" class="btn-primary flex-1 bg-pink-600 hover:bg-pink-700">
+                        <i class="fa-solid fa-check-to-slot mr-2"></i> Lançar IRRF
+                    </button>
+                    <button type="button" id="btnCancelIR" onclick="cancelarEdicaoIR()" class="btn-secondary hidden">
+                        Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div class="bg-slate-800 text-white px-5 py-3 flex items-center justify-between">
+                <span class="font-bold">Histórico de IRRF</span>
+                <div class="flex items-center gap-2">
+                    <input type="month" id="filtroHistoricoIR" onchange="carregarHistoricoIR()" class="bg-slate-700 border-0 rounded px-2 py-1 text-xs">
+                    <button onclick="limparFiltroHistoricoIR()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-times"></i></button>
+                </div>
+            </div>
+            <div class="overflow-x-auto max-h-[500px]">
+                <table class="w-full text-sm">
+                    <thead class="bg-slate-100 sticky top-0">
+                        <tr>
+                            <th class="pl-8 py-3 text-left font-bold text-slate-600">Competência</th>
+                            <th class="px-4 py-3 text-left font-bold text-slate-600">Origem</th>
+                            <th class="px-4 py-3 text-left font-bold text-slate-600">Tipo</th>
+                            <th class="px-4 py-3 text-right font-bold text-slate-600">Valor</th>
+                            <th class="px-4 py-3 text-center font-bold text-slate-600">Repasse</th>
+                            <th class="pr-8 py-3 text-center font-bold text-slate-600">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaHistoricoIR">
+                        <tr><td colspan="6" class="text-center p-8 text-slate-400">Carregando...</td></tr>
+                    </tbody>
+                    <tfoot class="bg-slate-100 border-t-2 border-slate-300">
+                        <tr>
+                            <td colspan="3" class="pl-8 py-3 font-bold text-slate-700">TOTAL</td>
+                            <td id="totalCompIRRF" class="px-4 py-3 text-right font-black text-pink-700 font-mono">R$ 0,00</td>
+                            <td colspan="2"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW GERENCIAL -->
+    <div id="view-ir-gerencial" class="hidden">
+        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div class="bg-slate-800 text-white px-5 py-3 flex items-center justify-between">
+                <span class="font-bold">Matriz Anual de IRRF</span>
+                <select id="filtroAnoIR" onchange="construirMatrizAnualIR()" class="bg-slate-700 border-0 rounded px-3 py-1 text-sm"></select>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead></thead>
+                    <tbody id="tabelaRelatorioIR">
+                        <tr><td colspan="14" class="text-center p-12 text-slate-400">Carregando...</td></tr>
+                    </tbody>
+                    <tfoot></tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

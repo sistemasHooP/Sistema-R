@@ -1,0 +1,173 @@
+<div id="page-margem" class="space-y-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-black text-slate-800">Margem Consignável</h1>
+            <p class="text-slate-500 text-sm">Cálculo e emissão de cartas de margem</p>
+        </div>
+        <div class="flex items-center gap-2 bg-white rounded-xl p-1 border border-slate-200">
+            <button id="tab-margem-calculadora" onclick="switchMargemView('calculadora')" class="px-6 py-2 rounded-lg text-sm font-bold transition bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100">
+                <i class="fa-solid fa-calculator mr-2"></i> Calculadora
+            </button>
+            <button id="tab-margem-cadastro" onclick="switchMargemView('cadastro')" class="px-6 py-2 rounded-lg text-sm font-bold text-slate-500 hover:bg-slate-50 transition">
+                <i class="fa-solid fa-users mr-2"></i> Servidores
+            </button>
+        </div>
+    </div>
+
+    <!-- VIEW CALCULADORA -->
+    <div id="view-margem-calculadora" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-6">
+            <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-calculator text-indigo-500"></i> Cálculo de Margem
+            </h3>
+            <form id="formCalculoMargem" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="md:col-span-2 relative">
+                        <label class="label-padrao">Servidor *</label>
+                        <input type="text" id="inputServidorMargem" class="input-padrao" placeholder="Digite o nome ou CPF..." oninput="filtrarServidoresCalc()" autocomplete="off">
+                        <input type="hidden" id="hiddenIdServidorMargem">
+                        <input type="hidden" id="hiddenCpfMargem">
+                        <input type="hidden" id="hiddenMatriculaMargem">
+                        <div id="autocompleteMargemContainer" class="absolute z-10 w-full bg-white border border-slate-200 rounded-lg shadow-lg mt-1 hidden max-h-48 overflow-y-auto"></div>
+                        <div id="infoServidorSelecionado"></div>
+                    </div>
+                    
+                    <div>
+                        <label class="label-padrao">Competência *</label>
+                        <input type="month" id="inputCompetenciaMargem" class="input-padrao" required>
+                    </div>
+                    
+                    <div>
+                        <label class="label-padrao">Percentual Margem (%)</label>
+                        <input type="number" id="inputPercentualMargem" class="input-padrao" value="35" min="1" max="100">
+                    </div>
+                    
+                    <div>
+                        <label class="label-padrao">Renda Bruta *</label>
+                        <input type="text" id="inputRendaBruta" class="input-padrao mask-money" placeholder="R$ 0,00" oninput="calcularMargem()">
+                    </div>
+                    
+                    <div>
+                        <label class="label-padrao">Descontos Obrigatórios</label>
+                        <input type="text" id="inputDescontosObrig" class="input-padrao mask-money" placeholder="R$ 0,00" oninput="calcularMargem()">
+                    </div>
+                    
+                    <div class="md:col-span-2">
+                        <label class="label-padrao">Empréstimos Atuais</label>
+                        <input type="text" id="inputEmprestimosAtuais" class="input-padrao mask-money" placeholder="R$ 0,00" oninput="calcularMargem()">
+                    </div>
+                </div>
+                
+                <!-- Resultado -->
+                <div id="containerResultadoMargem" class="hidden border-t border-slate-200 pt-4 mt-4">
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="bg-slate-50 rounded-lg p-4 text-center">
+                            <p class="text-xs text-slate-500 uppercase font-bold">Líquido</p>
+                            <p id="displayLiquidoMargem" class="text-xl font-black text-slate-700 font-mono">R$ 0,00</p>
+                        </div>
+                        <div class="bg-indigo-50 rounded-lg p-4 text-center">
+                            <p class="text-xs text-indigo-500 uppercase font-bold">Margem Total</p>
+                            <p id="displayMargemTotal" class="text-xl font-black text-indigo-700 font-mono">R$ 0,00</p>
+                        </div>
+                        <div class="bg-emerald-50 rounded-lg p-4 text-center">
+                            <p class="text-xs text-emerald-500 uppercase font-bold">Disponível</p>
+                            <p id="displayMargemDisponivel" class="text-xl font-black text-emerald-600 font-mono">R$ 0,00</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="calcularMargem()" class="btn-secondary flex-1">
+                        <i class="fa-solid fa-calculator mr-2"></i> Calcular
+                    </button>
+                    <button type="button" onclick="salvarEGerarCarta()" class="btn-primary flex-1 bg-indigo-600 hover:bg-indigo-700">
+                        <i class="fa-solid fa-file-pdf mr-2"></i> Gerar Carta PDF
+                    </button>
+                    <button type="button" onclick="limparCalculoMargem()" class="btn-secondary px-4">
+                        <i class="fa-solid fa-eraser"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Histórico -->
+        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div class="bg-slate-800 text-white px-5 py-3">
+                <span class="font-bold">Últimos Cálculos</span>
+            </div>
+            <div class="overflow-y-auto max-h-[400px]">
+                <table class="w-full text-sm">
+                    <thead class="bg-slate-100 sticky top-0">
+                        <tr>
+                            <th class="px-3 py-2 text-left text-xs font-bold text-slate-600">Data</th>
+                            <th class="px-3 py-2 text-left text-xs font-bold text-slate-600">Comp.</th>
+                            <th class="px-3 py-2 text-left text-xs font-bold text-slate-600">Servidor</th>
+                            <th class="px-3 py-2 text-right text-xs font-bold text-slate-600">Margem</th>
+                            <th class="px-3 py-2 text-center text-xs font-bold text-slate-600"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaHistoricoMargem">
+                        <tr><td colspan="5" class="text-center p-4 text-slate-400 text-xs">Carregando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW CADASTRO SERVIDORES -->
+    <div id="view-margem-cadastro" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="bg-white rounded-xl border border-slate-200 p-6">
+            <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-user-plus text-indigo-500"></i> Cadastrar Servidor
+            </h3>
+            <form id="formCadastroServidor" onsubmit="handleSaveServidor(event)" class="space-y-4">
+                <input type="hidden" id="idServidorEdicao">
+                
+                <div>
+                    <label class="label-padrao">Nome Completo *</label>
+                    <input type="text" id="inputNomeServidor" name="nome" class="input-padrao" required>
+                </div>
+                
+                <div>
+                    <label class="label-padrao">CPF *</label>
+                    <input type="text" id="inputCpfServidor" name="cpf" class="input-padrao mask-cpf" required>
+                </div>
+                
+                <div>
+                    <label class="label-padrao">Matrícula</label>
+                    <input type="text" id="inputMatriculaServidor" name="matricula" class="input-padrao">
+                </div>
+                
+                <div class="flex gap-3">
+                    <button type="submit" id="btnSalvarServidor" class="btn-primary flex-1 bg-indigo-600 hover:bg-indigo-700">
+                        <i class="fa-solid fa-plus mr-2"></i> Cadastrar
+                    </button>
+                    <button type="button" id="btnCancelServidor" onclick="cancelarEdicaoServidor()" class="btn-secondary hidden">
+                        Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div class="bg-slate-800 text-white px-5 py-3">
+                <span class="font-bold">Servidores Cadastrados</span>
+            </div>
+            <div class="overflow-x-auto max-h-[500px]">
+                <table class="w-full text-sm">
+                    <thead class="bg-slate-100 sticky top-0">
+                        <tr>
+                            <th class="pl-6 py-3 text-left font-bold text-slate-600">Nome</th>
+                            <th class="px-4 py-3 text-left font-bold text-slate-600">CPF</th>
+                            <th class="px-4 py-3 text-left font-bold text-slate-600">Matrícula</th>
+                            <th class="pr-6 py-3 text-center font-bold text-slate-600">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaServidoresCadastro">
+                        <tr><td colspan="4" class="text-center p-8 text-slate-400">Carregando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

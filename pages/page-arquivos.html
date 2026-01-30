@@ -1,0 +1,123 @@
+<div id="page-arquivos" class="space-y-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-black text-slate-800">Arquivos Digitais</h1>
+            <p class="text-slate-500 text-sm">Gestão eletrônica de documentos</p>
+        </div>
+        <div class="flex items-center gap-2 bg-white rounded-xl p-1 border border-slate-200">
+            <button id="tab-arq-upload" onclick="switchArquivosView('upload')" class="px-6 py-2 rounded-lg text-sm font-bold transition bg-cyan-50 text-cyan-700 shadow-sm border border-cyan-100">
+                <i class="fa-solid fa-cloud-upload mr-2"></i> Upload
+            </button>
+            <button id="tab-arq-lista" onclick="switchArquivosView('lista')" class="px-6 py-2 rounded-lg text-sm font-bold text-slate-500 hover:bg-slate-50 transition">
+                <i class="fa-solid fa-folder-open mr-2"></i> Acervo
+            </button>
+        </div>
+    </div>
+
+    <!-- VIEW UPLOAD -->
+    <div id="view-arq-upload" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl border border-slate-200 p-6">
+            <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-cloud-arrow-up text-cyan-500"></i> Enviar Documento
+            </h3>
+            <form id="formUploadArquivo" onsubmit="handleUploadArquivo(event)" class="space-y-4">
+                <div>
+                    <label class="label-padrao">Tipo de Documento *</label>
+                    <select id="selectTipoArquivo" name="tipo" class="input-padrao" required>
+                        <option value="">Selecione...</option>
+                    </select>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="label-padrao">Ano *</label>
+                        <input type="number" id="inputAnoArquivo" name="ano" class="input-padrao" value="2025" min="2000" max="2100" required>
+                    </div>
+                    <div>
+                        <label class="label-padrao">Número</label>
+                        <input type="text" id="inputNumeroArquivo" name="numero" class="input-padrao" placeholder="Ex: 001">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="label-padrao">Descrição</label>
+                    <textarea id="inputDescricaoArquivo" name="descricao" class="input-padrao" rows="2" placeholder="Breve descrição do documento..."></textarea>
+                </div>
+                
+                <div>
+                    <label class="label-padrao">Arquivo *</label>
+                    <div class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-cyan-400 transition cursor-pointer" onclick="document.getElementById('fileInput').click()">
+                        <input type="file" id="fileInput" name="arquivo" class="hidden" onchange="mostrarNomeArquivo(this)" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png" required>
+                        <i class="fa-solid fa-cloud-arrow-up text-4xl text-slate-300 mb-2"></i>
+                        <p class="text-sm text-slate-500">Clique para selecionar ou arraste o arquivo</p>
+                        <p class="text-xs text-slate-400 mt-1">PDF, DOC, XLS, JPG, PNG (máx. 10MB)</p>
+                    </div>
+                    <div id="fileFeedback" class="hidden mt-2 p-2 bg-cyan-50 rounded-lg text-sm text-cyan-700">
+                        <i class="fa-solid fa-file mr-2"></i><span id="fileNameDisplay"></span>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn-primary w-full bg-cyan-600 hover:bg-cyan-700">
+                    <i class="fa-solid fa-upload mr-2"></i> Enviar para Nuvem
+                </button>
+            </form>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 p-6">
+            <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-tags text-cyan-500"></i> Tipos de Documento
+            </h3>
+            <div class="flex gap-2 mb-4">
+                <input type="text" id="novoTipoArquivo" class="input-padrao flex-1" placeholder="Ex: Ata, Portaria, Ofício...">
+                <button onclick="addTipoArquivo()" class="btn-primary bg-cyan-600 hover:bg-cyan-700 px-4">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </div>
+            <ul id="listaTiposArquivo" class="border border-slate-200 rounded-lg overflow-hidden max-h-64 overflow-y-auto">
+                <li class="p-3 text-center text-xs text-slate-400">Carregando...</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- VIEW LISTA -->
+    <div id="view-arq-lista" class="hidden space-y-4">
+        <!-- Filtros -->
+        <div class="bg-white rounded-xl border border-slate-200 p-4 flex flex-wrap items-center gap-4">
+            <div class="flex items-center gap-2">
+                <label class="text-sm font-bold text-slate-600">Tipo:</label>
+                <select id="filtroArqTipo" onchange="carregarArquivosDigitais()" class="input-padrao text-sm py-1 w-40">
+                    <option value="">Todos</option>
+                </select>
+            </div>
+            <div class="flex items-center gap-2">
+                <label class="text-sm font-bold text-slate-600">Ano:</label>
+                <select id="filtroArqAno" onchange="carregarArquivosDigitais()" class="input-padrao text-sm py-1 w-24">
+                    <option value="">Todos</option>
+                </select>
+            </div>
+            <div class="flex-1">
+                <input type="text" id="filtroArqBusca" oninput="filtrarArquivosLocalmente()" class="input-padrao" placeholder="Buscar por nome, descrição, número...">
+            </div>
+            <span id="contadorArquivos" class="text-xs text-slate-400"></span>
+        </div>
+
+        <!-- Tabela -->
+        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto max-h-[600px]">
+                <table class="w-full text-sm">
+                    <thead class="bg-slate-800 text-white sticky top-0">
+                        <tr>
+                            <th class="pl-6 py-3 text-left font-bold">Data</th>
+                            <th class="px-4 py-3 text-left font-bold">Tipo</th>
+                            <th class="px-4 py-3 text-left font-bold">Documento</th>
+                            <th class="pr-6 py-3 text-center font-bold">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaArquivosDigitais">
+                        <tr><td colspan="4" class="text-center p-8 text-slate-400">Carregando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

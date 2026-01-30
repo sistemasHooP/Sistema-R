@@ -1,0 +1,123 @@
+<div id="page-config" class="space-y-6">
+    <div>
+        <h1 class="text-2xl font-black text-slate-800">Configurações</h1>
+        <p class="text-slate-500 text-sm">Configurações gerais do sistema</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Dados do Instituto -->
+        <div class="bg-white rounded-xl border border-slate-200 p-6">
+            <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-building text-slate-500"></i> Dados do Instituto
+            </h3>
+            <form id="formConfigInstituto" onsubmit="salvarConfiguracoes(event)" class="space-y-4">
+                <div>
+                    <label class="label-padrao">Nome do Instituto *</label>
+                    <input type="text" id="configNomeInstituto" class="input-padrao" required>
+                </div>
+                
+                <div>
+                    <label class="label-padrao">CNPJ</label>
+                    <input type="text" id="configCnpjInstituto" class="input-padrao mask-cnpj">
+                </div>
+                
+                <div>
+                    <label class="label-padrao">Endereço</label>
+                    <input type="text" id="configEnderecoInstituto" class="input-padrao">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="label-padrao">Cidade</label>
+                        <input type="text" id="configCidadeInstituto" class="input-padrao">
+                    </div>
+                    <div>
+                        <label class="label-padrao">UF</label>
+                        <input type="text" id="configUfInstituto" class="input-padrao" maxlength="2">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="label-padrao">Telefone</label>
+                    <input type="text" id="configTelefoneInstituto" class="input-padrao mask-telefone">
+                </div>
+                
+                <div>
+                    <label class="label-padrao">E-mail</label>
+                    <input type="email" id="configEmailInstituto" class="input-padrao">
+                </div>
+                
+                <button type="submit" class="btn-primary w-full">
+                    <i class="fa-solid fa-save mr-2"></i> Salvar Configurações
+                </button>
+            </form>
+        </div>
+
+        <!-- Cadastros Auxiliares -->
+        <div class="space-y-6">
+            <!-- Recursos/Fundos -->
+            <div class="bg-white rounded-xl border border-slate-200 p-6">
+                <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-wallet text-blue-500"></i> Recursos / Fundos
+                </h3>
+                <div class="flex gap-2 mb-4">
+                    <input type="text" id="novoRecurso" class="input-padrao flex-1" placeholder="Ex: Fundo Previdenciário">
+                    <button onclick="addRecurso()" class="btn-primary px-4">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+                <ul id="listaRecursos" class="border border-slate-200 rounded-lg overflow-hidden max-h-40 overflow-y-auto">
+                    <li class="p-3 text-center text-xs text-slate-400">Carregando...</li>
+                </ul>
+            </div>
+
+            <!-- Origens IRRF -->
+            <div class="bg-white rounded-xl border border-slate-200 p-6">
+                <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-landmark text-pink-500"></i> Origens IRRF
+                </h3>
+                <div class="flex gap-2 mb-4">
+                    <input type="text" id="novaOrigemIR" class="input-padrao flex-1" placeholder="Ex: Aposentados, Pensionistas">
+                    <button onclick="addOrigemIR()" class="btn-primary bg-pink-600 hover:bg-pink-700 px-4">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+                <ul id="listaOrigensIR" class="border border-slate-200 rounded-lg overflow-hidden max-h-40 overflow-y-auto">
+                    <li class="p-3 text-center text-xs text-slate-400">Carregando...</li>
+                </ul>
+            </div>
+
+            <!-- Tipos de Folha -->
+            <div class="bg-white rounded-xl border border-slate-200 p-6">
+                <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-users text-yellow-500"></i> Tipos de Folha
+                </h3>
+                <div class="flex gap-2 mb-4">
+                    <input type="text" id="novoNomeFolha" class="input-padrao flex-1" placeholder="Ex: Aposentados, Pensionistas">
+                    <button onclick="addNomeFolha()" class="btn-primary bg-yellow-500 hover:bg-yellow-600 text-yellow-900 px-4">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+                <ul id="listaNomesFolha" class="border border-slate-200 rounded-lg overflow-hidden max-h-40 overflow-y-auto">
+                    <li class="p-3 text-center text-xs text-slate-400">Carregando...</li>
+                </ul>
+            </div>
+
+            <!-- Bancos Consignados -->
+            <div class="bg-white rounded-xl border border-slate-200 p-6">
+                <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-building-columns text-teal-500"></i> Bancos Consignados
+                </h3>
+                <div class="flex gap-2 mb-4">
+                    <input type="text" id="novoBancoConsig" class="input-padrao flex-1" placeholder="Ex: Caixa, Bradesco">
+                    <button onclick="addBancoConsig()" class="btn-primary bg-teal-600 hover:bg-teal-700 px-4">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+                <ul id="listaBancosConsig" class="border border-slate-200 rounded-lg overflow-hidden max-h-40 overflow-y-auto">
+                    <li class="p-3 text-center text-xs text-slate-400">Carregando...</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

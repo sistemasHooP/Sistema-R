@@ -1,0 +1,193 @@
+<div id="page-despesas" class="space-y-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-black text-slate-800">Despesas Administrativas</h1>
+            <p class="text-slate-500 text-sm">Gestão de despesas e fornecedores</p>
+        </div>
+        <div class="flex items-center gap-2 bg-white rounded-xl p-1 border border-slate-200">
+            <button id="tab-desp-operacional" onclick="switchDespesasView('operacional')" class="px-4 py-2 rounded-lg text-sm font-bold transition bg-orange-50 text-orange-700 shadow-sm border border-orange-100">
+                <i class="fa-solid fa-plus mr-2"></i> Operacional
+            </button>
+            <button id="tab-desp-fornecedores" onclick="switchDespesasView('fornecedores')" class="px-4 py-2 rounded-lg text-sm font-bold text-slate-500 hover:bg-slate-50 transition">
+                <i class="fa-solid fa-building mr-2"></i> Fornecedores
+            </button>
+            <button id="tab-desp-gerencial" onclick="switchDespesasView('gerencial')" class="px-4 py-2 rounded-lg text-sm font-bold text-slate-500 hover:bg-slate-50 transition">
+                <i class="fa-solid fa-chart-bar mr-2"></i> Gerencial
+            </button>
+        </div>
+    </div>
+
+    <!-- VIEW OPERACIONAL -->
+    <div id="view-desp-operacional" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="bg-white rounded-xl border border-slate-200 p-6">
+            <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-file-invoice text-orange-500"></i> Nova Despesa
+            </h3>
+            <form id="formDespesa" onsubmit="handleSaveDespesa(event)" class="space-y-4">
+                <input type="hidden" id="idDespesaEdicao">
+                
+                <div>
+                    <label class="label-padrao">Competência *</label>
+                    <input type="month" id="inputCompetenciaDespesa" name="competencia" class="input-padrao" required>
+                </div>
+                
+                <div>
+                    <label class="label-padrao">Fornecedor *</label>
+                    <div class="flex gap-2">
+                        <div id="containerSelectFornecedor" class="flex-1">
+                            <select id="selectFornecedor" name="fornecedor" class="input-padrao" onchange="autoPreencherValorDespesa()">
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                        <div id="containerInputFornecedor" class="flex-1 hidden">
+                            <input type="text" id="inputFornecedorManual" class="input-padrao" placeholder="Nome do fornecedor">
+                        </div>
+                        <button type="button" id="btnToggleFornecedor" onclick="toggleFornecedorManual()" class="btn-secondary px-3" title="Digitar manualmente">
+                            <i class="fa-solid fa-keyboard"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="label-padrao">Nº Documento</label>
+                    <input type="text" id="inputNumDocumento" name="numDocumento" class="input-padrao" placeholder="NF, Recibo, etc.">
+                </div>
+                
+                <div>
+                    <label class="label-padrao">Valor *</label>
+                    <input type="text" id="valorDespesa" name="valor" class="input-padrao mask-money" placeholder="R$ 0,00" required>
+                </div>
+                
+                <div>
+                    <label class="label-padrao">Observações</label>
+                    <textarea id="inputObsDespesa" name="observacoes" class="input-padrao" rows="2"></textarea>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button type="submit" id="btnSalvarDespesa" class="btn-primary flex-1 bg-orange-500 hover:bg-orange-600">
+                        <i class="fa-solid fa-check mr-2"></i> Lançar Despesa
+                    </button>
+                    <button type="button" id="btnCancelDespesa" onclick="cancelarEdicaoDespesa()" class="btn-secondary hidden">
+                        Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div class="bg-slate-800 text-white px-5 py-3 flex items-center justify-between">
+                <span class="font-bold">Histórico de Despesas</span>
+                <div class="flex items-center gap-2">
+                    <input type="month" id="filtroHistoricoDespesas" onchange="carregarHistoricoDespesas()" class="bg-slate-700 border-0 rounded px-2 py-1 text-xs">
+                    <button onclick="limparFiltroHistoricoDespesas()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-times"></i></button>
+                </div>
+            </div>
+            <div class="overflow-x-auto max-h-[500px]">
+                <table class="w-full text-sm">
+                    <thead class="bg-slate-100 sticky top-0">
+                        <tr>
+                            <th class="pl-6 py-3 text-left font-bold text-slate-600">Competência</th>
+                            <th class="px-4 py-3 text-left font-bold text-slate-600">Fornecedor</th>
+                            <th class="px-4 py-3 text-left font-bold text-slate-600">Nº Doc</th>
+                            <th class="px-4 py-3 text-right font-bold text-slate-600">Valor</th>
+                            <th class="px-4 py-3 text-center font-bold text-slate-600">Status</th>
+                            <th class="pr-6 py-3 text-center font-bold text-slate-600">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaHistoricoDespesas">
+                        <tr><td colspan="6" class="text-center p-8 text-slate-400">Carregando...</td></tr>
+                    </tbody>
+                    <tfoot class="bg-slate-100 border-t-2 border-slate-300">
+                        <tr>
+                            <td colspan="3" class="pl-6 py-3 font-bold text-slate-700">TOTAL</td>
+                            <td id="totalCompDespesas" class="px-4 py-3 text-right font-black text-orange-700 font-mono">R$ 0,00</td>
+                            <td colspan="2"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW FORNECEDORES -->
+    <div id="view-desp-fornecedores" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="bg-white rounded-xl border border-slate-200 p-6">
+            <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-building text-orange-500"></i> Cadastro de Fornecedor
+            </h3>
+            <form id="formFornecedor" onsubmit="handleSaveFornecedor(event)" class="space-y-4">
+                <input type="hidden" id="idFornecedorEdicao">
+                
+                <div>
+                    <label class="label-padrao">Nome / Razão Social *</label>
+                    <input type="text" id="inputNomeFornecedor" name="nome" class="input-padrao" required>
+                </div>
+                
+                <div>
+                    <label class="label-padrao">CNPJ / CPF</label>
+                    <input type="text" id="inputCnpjFornecedor" name="cnpj" class="input-padrao mask-cnpj">
+                </div>
+                
+                <div>
+                    <label class="label-padrao">Tipo de Serviço</label>
+                    <input type="text" id="inputTipoServico" name="tipoServico" class="input-padrao" placeholder="Ex: Consultoria, Material...">
+                </div>
+                
+                <div>
+                    <label class="label-padrao">Valor Padrão</label>
+                    <input type="text" id="inputValorPadrao" name="valorPadrao" class="input-padrao mask-money" placeholder="R$ 0,00">
+                </div>
+                
+                <div class="flex gap-3">
+                    <button type="submit" id="btnSalvarFornecedor" class="btn-primary flex-1 bg-orange-500 hover:bg-orange-600">
+                        <i class="fa-solid fa-plus mr-2"></i> Cadastrar
+                    </button>
+                    <button type="button" id="btnCancelFornecedor" onclick="cancelarEdicaoFornecedor()" class="btn-secondary hidden">
+                        Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div class="bg-slate-800 text-white px-5 py-3">
+                <span class="font-bold">Fornecedores Cadastrados</span>
+            </div>
+            <div class="overflow-x-auto max-h-[500px]">
+                <table class="w-full text-sm">
+                    <thead class="bg-slate-100 sticky top-0">
+                        <tr>
+                            <th class="pl-6 py-3 text-left font-bold text-slate-600">Nome</th>
+                            <th class="px-4 py-3 text-left font-bold text-slate-600">CNPJ/CPF</th>
+                            <th class="px-4 py-3 text-left font-bold text-slate-600">Tipo Serviço</th>
+                            <th class="px-4 py-3 text-right font-bold text-slate-600">Valor Padrão</th>
+                            <th class="pr-6 py-3 text-center font-bold text-slate-600">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaFornecedores">
+                        <tr><td colspan="5" class="text-center p-8 text-slate-400">Carregando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW GERENCIAL -->
+    <div id="view-desp-gerencial" class="hidden">
+        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div class="bg-slate-800 text-white px-5 py-3 flex items-center justify-between">
+                <span class="font-bold">Matriz Anual de Despesas</span>
+                <select id="filtroAnoDespesas" onchange="construirMatrizAnualDespesas()" class="bg-slate-700 border-0 rounded px-3 py-1 text-sm"></select>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead></thead>
+                    <tbody id="tabelaRelatorioDespesas">
+                        <tr><td colspan="14" class="text-center p-12 text-slate-400">Carregando...</td></tr>
+                    </tbody>
+                    <tfoot></tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

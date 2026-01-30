@@ -1,0 +1,83 @@
+<div id="page-importacao" class="space-y-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-black text-slate-800">Importação de Dados</h1>
+            <p class="text-slate-500 text-sm">Importe dados em lote de arquivos CSV/TXT</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Formulário de Importação -->
+        <div class="bg-white rounded-xl border border-slate-200 p-6">
+            <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-upload text-violet-500"></i> Configurar Importação
+            </h3>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="label-padrao">Tipo de Dados *</label>
+                    <select id="selectTipoImportacao" onchange="atualizarGuiaImportacao()" class="input-padrao">
+                        <option value="">Selecione o tipo...</option>
+                        <option value="SERVIDORES">Servidores</option>
+                        <option value="FORNECEDORES">Fornecedores</option>
+                        <option value="RECOLHIMENTOS">Guias de Recolhimento</option>
+                        <option value="FOLHAS">Folhas de Pagamento</option>
+                        <option value="DESPESAS">Despesas</option>
+                        <option value="IRRF">Imposto de Renda</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="label-padrao">Arquivo (CSV ou TXT) *</label>
+                    <div class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-violet-400 transition cursor-pointer" onclick="document.getElementById('inputArquivoImportacao').click()">
+                        <input type="file" id="inputArquivoImportacao" class="hidden" accept=".csv,.txt" onchange="processarArquivoImportacao(this)">
+                        <i class="fa-solid fa-file-csv text-4xl text-slate-300 mb-2"></i>
+                        <p class="text-sm text-slate-500">Clique para selecionar o arquivo</p>
+                        <p class="text-xs text-slate-400 mt-1">Formatos: .csv ou .txt (separado por ; ou ,)</p>
+                    </div>
+                    <p id="feedbackNomeArquivo" class="hidden mt-2 text-sm text-violet-600 font-medium"></p>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button id="btnProcessarImportacao" onclick="iniciarImportacao()" disabled class="btn-primary flex-1 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fa-solid fa-cogs mr-2"></i> Processar Arquivo
+                    </button>
+                    <button onclick="baixarModeloImportacao()" class="btn-secondary px-4" title="Baixar modelo">
+                        <i class="fa-solid fa-download"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Guia de Importação -->
+        <div class="bg-white rounded-xl border border-slate-200 p-6">
+            <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-circle-info text-violet-500"></i> Instruções
+            </h3>
+            <div id="guiaImportacao" class="text-sm">
+                <div class="text-center p-8 text-slate-400">
+                    <i class="fa-solid fa-hand-pointer text-4xl mb-3"></i>
+                    <p>Selecione o tipo de dados para ver as instruções.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prévia dos Dados -->
+    <div id="containerPreviaImportacao" class="hidden bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div class="bg-slate-800 text-white px-5 py-3 flex items-center justify-between">
+            <span class="font-bold">Prévia dos Dados</span>
+            <span id="contadorLinhasImportacao" class="text-xs text-slate-400"></span>
+        </div>
+        <div class="p-4">
+            <!-- Tabela de prévia será inserida aqui -->
+        </div>
+    </div>
+
+    <!-- Botão Confirmar -->
+    <div class="flex justify-end">
+        <button id="btnConfirmarImportacao" onclick="confirmarImportacao()" class="hidden btn-primary bg-emerald-600 hover:bg-emerald-700 px-8">
+            <i class="fa-solid fa-check-double mr-2"></i> Confirmar Importação
+        </button>
+    </div>
+</div>

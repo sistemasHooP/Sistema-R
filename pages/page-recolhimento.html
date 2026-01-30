@@ -1,0 +1,151 @@
+<div id="page-recolhimento" class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-black text-slate-800">Guias de Recolhimento</h1>
+            <p class="text-slate-500 text-sm">Gestão de contribuições previdenciárias</p>
+        </div>
+        <div class="flex items-center gap-2 bg-white rounded-xl p-1 border border-slate-200">
+            <button id="tab-rec-operacional" onclick="switchRecView('operacional')" class="px-6 py-2 rounded-lg text-sm font-bold transition bg-blue-50 text-blue-700 shadow-sm border border-blue-100">
+                <i class="fa-solid fa-plus mr-2"></i> Operacional
+            </button>
+            <button id="tab-rec-gerencial" onclick="switchRecView('gerencial')" class="px-6 py-2 rounded-lg text-sm font-bold text-slate-500 hover:bg-slate-50 transition">
+                <i class="fa-solid fa-chart-bar mr-2"></i> Gerencial
+            </button>
+        </div>
+    </div>
+
+    <!-- VIEW OPERACIONAL -->
+    <div id="view-rec-operacional" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Formulário -->
+        <div class="bg-white rounded-xl border border-slate-200 p-6">
+            <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-file-circle-plus text-blue-500"></i> Nova Guia
+            </h3>
+            <form id="formRecolhimento" onsubmit="handleSaveRecolhimento(event)" class="space-y-4">
+                <input type="hidden" id="idGuiaEdicao">
+                
+                <div>
+                    <label class="label-padrao">Competência *</label>
+                    <input type="month" id="inputCompetenciaRec" name="competencia" class="input-padrao" required>
+                </div>
+                
+                <div>
+                    <label class="label-padrao">Tipo de Guia *</label>
+                    <select id="selectTipoGuia" name="tipoGuia" class="input-padrao" required>
+                        <option value="">Selecione...</option>
+                        <option value="GPS">GPS</option>
+                        <option value="DARF">DARF</option>
+                        <option value="Guia Própria">Guia Própria</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="label-padrao">Recurso / Fundo *</label>
+                    <select id="selectRecurso" name="recurso" class="input-padrao" required>
+                        <option value="">Selecione...</option>
+                    </select>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="label-padrao">Base Patronal</label>
+                        <input type="text" id="basePatronal" name="basePatronal" class="input-padrao mask-money" placeholder="R$ 0,00">
+                    </div>
+                    <div>
+                        <label class="label-padrao">Base Segurado</label>
+                        <input type="text" id="baseSegurado" name="baseSegurado" class="input-padrao mask-money" placeholder="R$ 0,00">
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="label-padrao">Valor Patronal *</label>
+                        <input type="text" id="valorPatronal" name="valorPatronal" class="input-padrao mask-money" placeholder="R$ 0,00" oninput="calcularTotalGuia()" required>
+                    </div>
+                    <div>
+                        <label class="label-padrao">Valor Segurado *</label>
+                        <input type="text" id="valorSegurado" name="valorSegurado" class="input-padrao mask-money" placeholder="R$ 0,00" oninput="calcularTotalGuia()" required>
+                    </div>
+                </div>
+                
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center">
+                    <span class="text-xs text-blue-600 font-bold uppercase">Total da Guia</span>
+                    <p id="displayTotalGuia" class="text-2xl font-black text-blue-700 font-mono">R$ 0,00</p>
+                </div>
+                
+                <div>
+                    <label class="label-padrao">Observações</label>
+                    <textarea id="inputObsRec" name="observacoes" class="input-padrao" rows="2"></textarea>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button type="submit" id="btnSalvarRec" class="btn-primary flex-1">
+                        <i class="fa-solid fa-check mr-2"></i> Salvar Guia
+                    </button>
+                    <button type="button" id="btnCancelRec" onclick="cancelarEdicaoGuia()" class="btn-secondary hidden">
+                        Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Histórico -->
+        <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div class="bg-slate-800 text-white px-5 py-3 flex items-center justify-between">
+                <span class="font-bold">Histórico de Guias</span>
+                <div class="flex items-center gap-2">
+                    <input type="month" id="filtroHistoricoRec" onchange="carregarHistoricoGuias()" class="bg-slate-700 border-0 rounded px-2 py-1 text-xs">
+                    <button onclick="limparFiltroHistoricoRec()" class="text-slate-400 hover:text-white" title="Limpar filtro">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="overflow-x-auto max-h-[500px]">
+                <table class="w-full text-sm">
+                    <thead class="bg-slate-100 sticky top-0">
+                        <tr>
+                            <th class="pl-6 py-3 text-left font-bold text-slate-600">Competência</th>
+                            <th class="px-4 py-3 text-left font-bold text-slate-600">Tipo</th>
+                            <th class="px-4 py-3 text-left font-bold text-slate-600">Recurso</th>
+                            <th class="px-4 py-3 text-right font-bold text-slate-600">Valor Total</th>
+                            <th class="px-4 py-3 text-center font-bold text-slate-600">Status</th>
+                            <th class="pr-6 py-3 text-center font-bold text-slate-600">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaHistoricoGuias">
+                        <tr><td colspan="6" class="text-center p-8 text-slate-400">Carregando...</td></tr>
+                    </tbody>
+                    <tfoot class="bg-slate-100 border-t-2 border-slate-300">
+                        <tr>
+                            <td colspan="3" class="pl-6 py-3 font-bold text-slate-700">TOTAL</td>
+                            <td id="totalCompetenciaGuias" class="px-4 py-3 text-right font-black text-blue-700 font-mono">R$ 0,00</td>
+                            <td colspan="2"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW GERENCIAL -->
+    <div id="view-rec-gerencial" class="hidden">
+        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div class="bg-slate-800 text-white px-5 py-3 flex items-center justify-between">
+                <span class="font-bold">Matriz Anual de Recolhimentos</span>
+                <select id="filtroAnoRec" onchange="construirMatrizAnualRec()" class="bg-slate-700 border-0 rounded px-3 py-1 text-sm">
+                    <option value="2025">2025</option>
+                </select>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead id="theadRelatorioGuias"></thead>
+                    <tbody id="tabelaRelatorioGuias">
+                        <tr><td colspan="14" class="text-center p-12 text-slate-400">Carregando...</td></tr>
+                    </tbody>
+                    <tfoot></tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
