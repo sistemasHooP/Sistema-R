@@ -3,345 +3,224 @@
 // Versão: 1.0.0 - Migração GitHub
 // =============================================================================
 
-// =============================================================================
-// 1. CONFIGURAÇÃO DA API
-// =============================================================================
+// --- Configuração da API ---
+const API_BASE_URL = 'https://script.google.com/macros/s/AKfycbxZhr3pttwQWWSPjHVxOIyNR_l78dgllG27cbxMb2NurIowDPBzGRsdu9TOGsPADWYZ/exec';
 
-const API_CONFIG = {
-    BASE_URL: 'https://script.google.com/macros/s/AKfycbxZhr3pttwQWWSPjHVxOIyNR_l78dgllG27cbxMb2NurIowDPBzGRsdu9TOGsPADWYZ/exec',
-    TIMEOUT: 30000, // 30 segundos
-    RETRY_ATTEMPTS: 2
-};
+// --- Cache Global ---
+let configCache = null;
+let paginaAtual = 'page-dashboard';
 
 // =============================================================================
-// 2. FUNÇÕES DE COMUNICAÇÃO COM A API
+// INICIALIZAÇÃO DO SISTEMA
 // =============================================================================
 
-/**
- * Função principal para chamadas à API
- * @param {string} action - Nome da ação/endpoint
- * @param {object} params - Parâmetros adicionais
- * @param {string} method - GET ou POST (padrão: POST)
- * @returns {Promise<object>} Resposta da API
- */
-async function apiCall(action, params = {}, method = 'POST') {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.TIMEOUT);
-
-    try {
-        let url = API_CONFIG.BASE_URL;
-        let options = {
-            method: method,
-            signal: controller.signal
-        };
-
-        if (method === 'GET') {
-            // Para GET, adiciona parâmetros na URL
-            const queryParams = new URLSearchParams({ action, ...params });
-            url = `${url}?${queryParams.toString()}`;
-        } else {
-            // Para POST, envia no body
-            options.headers = {
-                'Content-Type': 'text/plain;charset=utf-8'
-            };
-            options.body = JSON.stringify({ action, ...params });
-        }
-
-        const response = await fetch(url, options);
-        clearTimeout(timeoutId);
-
-        if (!response.ok) {
-            throw new Error(`Erro HTTP: ${response.status}`);
-        }
-
-        const data = await response.json();
-        return data;
-
-    } catch (error) {
-        clearTimeout(timeoutId);
-        
-        if (error.name === 'AbortError') {
-            console.error('Timeout na requisição:', action);
-            throw new Error('A requisição demorou muito. Tente novamente.');
-        }
-        
-        console.error('Erro na API:', error);
-        throw error;
-    }
-}
-
-/**
- * Wrapper para chamadas GET
- */
-async function apiGet(action, params = {}) {
-    return apiCall(action, params, 'GET');
-}
-
-/**
- * Wrapper para chamadas POST
- */
-async function apiPost(action, params = {}) {
-    return apiCall(action, params, 'POST');
-}
-
-/**
- * Função legada para compatibilidade com código existente
- * Simula o comportamento do google.script.run
- */
-const api = {
-    run: function(action, params = {}) {
-        return {
-            withSuccessHandler: function(successCallback) {
-                return {
-                    withFailureHandler: function(failureCallback) {
-                        apiPost(action, params)
-                            .then(result => {
-                                if (result.success === false && result.error) {
-                                    if (failureCallback) failureCallback(result.error);
-                                } else if (result.data !== undefined) {
-                                    successCallback(result.data);
-                                } else {
-                                    successCallback(result);
-                                }
-                            })
-                            .catch(error => {
-                                if (failureCallback) failureCallback(error.message);
-                                else console.error('Erro não tratado:', error);
-                            });
-                        return this;
-                    },
-                    // Caso não tenha failureHandler
-                    then: function(callback) {
-                        apiPost(action, params)
-                            .then(result => {
-                                if (result.data !== undefined) {
-                                    callback(result.data);
-                                } else {
-                                    callback(result);
-                                }
-                            })
-                            .catch(error => console.error('Erro:', error));
-                    }
-                };
-            }
-        };
-    }
-};
-
-// Objeto global para simular google.script.run (compatibilidade)
-const google = {
-    script: {
-        run: new Proxy({}, {
-            get: function(target, functionName) {
-                return {
-                    withSuccessHandler: function(successCallback) {
-                        const handler = {
-                            failureCallback: null,
-                            withFailureHandler: function(failCallback) {
-                                this.failureCallback = failCallback;
-                                return this;
-                            }
-                        };
-                        
-                        // Retorna uma função que será chamada com os argumentos
-                        return new Proxy(handler, {
-                            get: function(handlerTarget, prop) {
-                                if (prop === 'withFailureHandler') {
-                                    return handlerTarget.withFailureHandler.bind(handlerTarget);
-                                }
-                                // Qualquer outra propriedade é tratada como chamada de função
-                                return function(...args) {
-                                    // Converte argumentos para params
-                                    let params = {};
-                                    if (args.length === 1 && typeof args[0] === 'object') {
-                                        params = { dados: args[0] };
-                                    } else if (args.length === 1) {
-                                        params = { valor: args[0] };
-                                    } else if (args.length === 2) {
-                                        params = { tipo: args[0], dados: args[1] };
-                                    } else if (args.length > 0) {
-                                        params = { args: args };
-                                    }
-
-                                    apiPost(functionName, params)
-                                        .then(result => {
-                                            if (result.data !== undefined) {
-                                                successCallback(result.data);
-                                            } else {
-                                                successCallback(result);
-                                            }
-                                        })
-                                        .catch(error => {
-                                            if (handlerTarget.failureCallback) {
-                                                handlerTarget.failureCallback(error.message);
-                                            } else {
-                                                console.error('Erro não tratado:', error);
-                                            }
-                                        });
-                                };
-                            }
-                        });
-                    }
-                };
-            }
-        })
-    }
-};
-
-// =============================================================================
-// 3. SISTEMA DE NAVEGAÇÃO (SPA)
-// =============================================================================
-
-let paginaAtual = 'page-guia-rapido';
-let paginasCarregadas = {};
-
-/**
- * Exibe uma página específica
- * @param {string} pageId - ID da página (sem #)
- */
-function showPage(pageId) {
-    // Oculta todas as páginas
-    document.querySelectorAll('.page-content').forEach(page => {
-        page.classList.remove('active');
-        page.style.display = 'none';
-    });
-
-    // Remove classe active de todos os itens do menu
-    document.querySelectorAll('.menu-item').forEach(item => {
-        item.classList.remove('active');
-    });
-
-    // Exibe a página solicitada
-    const targetPage = document.getElementById(pageId);
-    if (targetPage) {
-        targetPage.style.display = 'block';
-        targetPage.classList.add('active');
-        paginaAtual = pageId;
-
-        // Ativa item do menu correspondente
-        const menuId = 'menu-' + pageId.replace('page-', '');
-        const menuItem = document.getElementById(menuId);
-        if (menuItem) {
-            menuItem.classList.add('active');
-        }
-
-        // Callback de inicialização da página
-        inicializarPagina(pageId);
-
-        // Scroll para o topo
-        window.scrollTo(0, 0);
-        
-        // Fecha sidebar no mobile
-        if (window.innerWidth < 1024) {
-            closeSidebar();
-        }
-    } else {
-        // Se a página não existe no DOM, tenta carregar
-        carregarPagina(pageId);
-    }
-}
-
-/**
- * Carrega o HTML de uma página dinamicamente
- */
-async function carregarPagina(pageId) {
-    const container = document.getElementById('page-container');
+function initSistema() {
+    console.log('🚀 Inicializando Sistema RPPS...');
     
-    // Mostra loading
-    toggleLoading(true);
+    // Define data atual no header
+    atualizarDataHeader();
     
-    try {
-        // Mapeia o ID da página para o arquivo
-        const fileName = pageId.replace('page-', 'Page_')
-            .split('-')
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-            .join('') + '.html';
-        
-        const response = await fetch(`pages/${fileName}`);
-        
-        if (!response.ok) {
-            throw new Error('Página não encontrada');
-        }
-        
-        const html = await response.text();
-        
-        // Cria container da página se não existir
-        let pageElement = document.getElementById(pageId);
-        if (!pageElement) {
-            pageElement = document.createElement('div');
-            pageElement.id = pageId;
-            pageElement.className = 'page-content';
-            container.appendChild(pageElement);
-        }
-        
-        pageElement.innerHTML = html;
-        paginasCarregadas[pageId] = true;
-        
-        // Exibe a página
-        showPage(pageId);
-        
-    } catch (error) {
-        console.error('Erro ao carregar página:', error);
-        sysAlert('Erro', 'Não foi possível carregar a página.', 'erro');
-    } finally {
-        toggleLoading(false);
+    // Carrega configurações iniciais
+    carregarConfiguracoes();
+    
+    // Carrega página inicial (Dashboard)
+    carregarPagina('page-dashboard');
+    
+    // Configura máscaras de input
+    configurarMascaras();
+    
+    // Inicializa competência atual nos inputs
+    inicializarCompetencias();
+    
+    console.log('✅ Sistema inicializado com sucesso!');
+}
+
+function atualizarDataHeader() {
+    const now = new Date();
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const dataFormatada = now.toLocaleDateString('pt-BR', options);
+    
+    const headerDate = document.getElementById('headerDate');
+    if (headerDate) {
+        headerDate.innerText = dataFormatada.charAt(0).toUpperCase() + dataFormatada.slice(1);
+    }
+    
+    const hora = now.getHours();
+    let saudacao = 'Bom dia';
+    if (hora >= 12 && hora < 18) saudacao = 'Boa tarde';
+    else if (hora >= 18) saudacao = 'Boa noite';
+    
+    const headerGreeting = document.getElementById('headerGreeting');
+    if (headerGreeting) {
+        headerGreeting.innerText = saudacao + '!';
     }
 }
 
-/**
- * Inicializa callbacks específicos de cada página
- */
-function inicializarPagina(pageId) {
-    switch (pageId) {
-        case 'page-guia-rapido':
-            // Página inicial - sem ação específica
-            break;
+function inicializarCompetencias() {
+    const dataAtual = new Date();
+    const mesAtualFmt = dataAtual.getFullYear() + '-' + String(dataAtual.getMonth() + 1).padStart(2, '0');
+    
+    // Lista de IDs de inputs de competência
+    const inputsCompetencia = [
+        'inputCompetenciaRec',
+        'inputCompetenciaIR',
+        'inputCompetenciaPrev',
+        'inputCompetenciaConsig',
+        'inputCompetenciaFolha',
+        'inputCompetenciaDespesa',
+        'inputCompetenciaOutroBanco',
+        'inputCompetenciaMargem',
+        'filtroCompetenciaOutrosBancos'
+    ];
+    
+    inputsCompetencia.forEach(function(id) {
+        const el = document.getElementById(id);
+        if (el) el.value = mesAtualFmt;
+    });
+}
+
+// =============================================================================
+// CARREGAMENTO DE CONFIGURAÇÕES
+// =============================================================================
+
+function carregarConfiguracoes() {
+    apiGet('getConfiguracoes', function(config) {
+        if (config) {
+            configCache = config;
             
+            // Atualiza sidebar
+            const sidebarNome = document.getElementById('sidebarNome');
+            const sidebarCnpj = document.getElementById('sidebarCnpj');
+            
+            if (sidebarNome) sidebarNome.innerText = config.nome || 'Instituto de Previdência';
+            if (sidebarCnpj) sidebarCnpj.innerText = config.cnpj ? 'CNPJ: ' + config.cnpj : '';
+            
+            // Se tiver logo, atualiza
+            if (config.logoUrl) {
+                const sidebarLogo = document.getElementById('sidebarLogo');
+                if (sidebarLogo) {
+                    sidebarLogo.innerHTML = '<img src="' + config.logoUrl + '" alt="Logo" class="h-full w-full object-contain">';
+                }
+            }
+        }
+    });
+}
+
+function buscarConfiguracoes(callback) {
+    if (configCache) {
+        callback(configCache);
+    } else {
+        apiGet('getConfiguracoes', function(config) {
+            configCache = config;
+            callback(config);
+        });
+    }
+}
+
+// =============================================================================
+// NAVEGAÇÃO E CARREGAMENTO DE PÁGINAS
+// =============================================================================
+
+function carregarPagina(pagina) {
+    console.log('📄 Carregando página:', pagina);
+    
+    paginaAtual = pagina;
+    
+    // Atualiza menu ativo
+    atualizarMenuAtivo(pagina);
+    
+    // Fecha sidebar mobile
+    closeSidebar();
+    
+    // Carrega conteúdo da página
+    const container = document.getElementById('pageContainer');
+    if (!container) return;
+    
+    // Loading
+    container.innerHTML = '<div class="flex items-center justify-center h-64"><div class="text-center"><i class="fa-solid fa-circle-notch fa-spin text-4xl text-blue-500 mb-4"></i><p class="text-slate-500">Carregando...</p></div></div>';
+    
+    // Mapeia página para arquivo
+    const arquivo = 'pages/' + pagina + '.html';
+    
+    // Carrega via fetch
+    fetch(arquivo)
+        .then(function(response) {
+            if (!response.ok) throw new Error('Página não encontrada');
+            return response.text();
+        })
+        .then(function(html) {
+            container.innerHTML = html;
+            
+            // Executa inicialização específica da página
+            inicializarPagina(pagina);
+        })
+        .catch(function(error) {
+            console.error('Erro ao carregar página:', error);
+            container.innerHTML = '<div class="text-center p-12"><i class="fa-solid fa-triangle-exclamation text-5xl text-amber-500 mb-4"></i><h2 class="text-xl font-bold text-slate-700 mb-2">Página não encontrada</h2><p class="text-slate-500">A página solicitada não existe ou não pôde ser carregada.</p><button onclick="carregarPagina(\'page-dashboard\')" class="mt-4 btn-primary">Voltar ao Dashboard</button></div>';
+        });
+}
+
+function inicializarPagina(pagina) {
+    console.log('⚙️ Inicializando:', pagina);
+    
+    // Reinicializa competências
+    inicializarCompetencias();
+    
+    // Inicialização específica por página
+    switch (pagina) {
         case 'page-dashboard':
+            if (typeof popularFiltroAnosDashboard === 'function') popularFiltroAnosDashboard();
             if (typeof carregarDashboard === 'function') carregarDashboard();
             break;
             
         case 'page-recolhimento':
-            if (typeof switchRecView === 'function') switchRecView('operacional');
             if (typeof carregarRecursos === 'function') carregarRecursos();
-            break;
-            
-        case 'page-folha':
-            if (typeof switchFolhaView === 'function') switchFolhaView('operacional');
-            if (typeof carregarNomesFolha === 'function') carregarNomesFolha();
+            if (typeof carregarHistoricoGuias === 'function') carregarHistoricoGuias();
             break;
             
         case 'page-imposto-renda':
-            if (typeof switchIRView === 'function') switchIRView('operacional');
             if (typeof carregarOrigensIR === 'function') carregarOrigensIR();
+            if (typeof carregarHistoricoIR === 'function') carregarHistoricoIR();
             break;
             
         case 'page-prev-municipal':
-            if (typeof switchPrevView === 'function') switchPrevView('operacional');
+            if (typeof carregarOrigensPrev === 'function') carregarOrigensPrev();
+            if (typeof carregarHistoricoPrev === 'function') carregarHistoricoPrev();
             break;
             
         case 'page-consignados':
-            if (typeof switchConsigView === 'function') switchConsigView('operacional');
+            if (typeof carregarBancosConsig === 'function') carregarBancosConsig();
+            if (typeof carregarHistoricoConsig === 'function') carregarHistoricoConsig();
             break;
             
-        case 'page-margem':
-            if (typeof switchMargemView === 'function') switchMargemView('calculadora');
+        case 'page-folha':
+            if (typeof carregarNomesFolha === 'function') carregarNomesFolha();
+            if (typeof carregarHistoricoFolha === 'function') carregarHistoricoFolha();
             break;
             
         case 'page-despesas':
-            if (typeof switchDespesasView === 'function') switchDespesasView('operacional');
+            if (typeof carregarFornecedoresSelect === 'function') carregarFornecedoresSelect();
+            if (typeof carregarHistoricoDespesas === 'function') carregarHistoricoDespesas();
             break;
             
         case 'page-pagamentos':
-            if (typeof switchPagamentosView === 'function') switchPagamentosView('pendentes');
+            if (typeof popularFiltroAnosPendentes === 'function') popularFiltroAnosPendentes();
+            if (typeof popularFiltroAnosHistorico === 'function') popularFiltroAnosHistorico();
+            if (typeof carregarPagamentosPendentes === 'function') carregarPagamentosPendentes();
+            break;
+            
+        case 'page-margem':
+            if (typeof carregarServidoresAutocompleteCalc === 'function') carregarServidoresAutocompleteCalc();
+            if (typeof carregarHistoricoMargem === 'function') carregarHistoricoMargem();
+            break;
+            
+        case 'page-arquivos':
+            if (typeof carregarTiposArquivo === 'function') carregarTiposArquivo('selectTipoArquivo');
+            if (typeof popularFiltroAnosArquivos === 'function') popularFiltroAnosArquivos();
             break;
             
         case 'page-relatorios':
             if (typeof carregarCabecalhoRelatorio === 'function') carregarCabecalhoRelatorio();
-            break;
-            
-        case 'page-arquivos':
-            if (typeof switchArquivosView === 'function') switchArquivosView('upload');
             break;
             
         case 'page-importacao':
@@ -349,528 +228,548 @@ function inicializarPagina(pageId) {
             break;
             
         case 'page-config':
-            if (typeof carregarConfiguracoes === 'function') carregarConfiguracoes();
+            carregarDadosConfig();
             break;
+    }
+    
+    // Reconfigura máscaras após carregar página
+    setTimeout(configurarMascaras, 100);
+}
+
+function atualizarMenuAtivo(pagina) {
+    // Remove classe ativa de todos os itens
+    document.querySelectorAll('.menu-item').forEach(function(item) {
+        item.classList.remove('menu-item-active');
+    });
+    
+    // Adiciona classe ativa ao item atual
+    const menuItem = document.querySelector('.menu-item[data-page="' + pagina + '"]');
+    if (menuItem) {
+        menuItem.classList.add('menu-item-active');
     }
 }
 
 // =============================================================================
-// 4. CONTROLE DO SIDEBAR
+// SIDEBAR MOBILE
 // =============================================================================
 
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebarOverlay');
     
-    if (sidebar.classList.contains('-translate-x-full')) {
-        sidebar.classList.remove('-translate-x-full');
-        overlay.classList.remove('hidden');
-    } else {
-        sidebar.classList.add('-translate-x-full');
-        overlay.classList.add('hidden');
-    }
+    sidebar.classList.toggle('-translate-x-full');
+    overlay.classList.toggle('hidden');
 }
 
 function closeSidebar() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebarOverlay');
     
-    sidebar.classList.add('-translate-x-full');
-    overlay.classList.add('hidden');
+    if (window.innerWidth < 1024) {
+        sidebar.classList.add('-translate-x-full');
+        overlay.classList.add('hidden');
+    }
 }
 
 // =============================================================================
-// 5. SISTEMA DE LOADING
+// LOADING OVERLAY
 // =============================================================================
 
 function toggleLoading(show) {
-    const loading = document.getElementById('loading');
-    if (loading) {
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) {
         if (show) {
-            loading.classList.remove('hidden');
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
         } else {
-            loading.classList.add('hidden');
+            overlay.classList.add('hidden');
+            overlay.classList.remove('flex');
         }
     }
 }
 
 // =============================================================================
-// 6. SISTEMA DE ALERTAS E CONFIRMAÇÕES
+// SISTEMA DE ALERTAS
 // =============================================================================
 
-let confirmCallback = null;
-
-/**
- * Exibe um alerta do sistema
- * @param {string} titulo - Título do alerta
- * @param {string} mensagem - Mensagem do alerta
- * @param {string} tipo - Tipo: 'sucesso', 'erro', 'info', 'aviso'
- */
-function sysAlert(titulo, mensagem, tipo = 'info') {
+function sysAlert(titulo, mensagem, tipo) {
     const modal = document.getElementById('modalAlerta');
-    const icone = document.getElementById('alertaIcone');
+    const header = document.getElementById('alertaHeader');
+    const iconContainer = document.getElementById('alertaIconContainer');
+    const icon = document.getElementById('alertaIcon');
     const tituloEl = document.getElementById('alertaTitulo');
     const mensagemEl = document.getElementById('alertaMensagem');
     const botoesEl = document.getElementById('alertaBotoes');
-
-    // Define ícone e cor baseado no tipo
-    let iconClass = 'fa-circle-info';
-    let bgClass = 'bg-blue-100 text-blue-600';
     
-    switch (tipo) {
-        case 'sucesso':
-            iconClass = 'fa-circle-check';
-            bgClass = 'bg-emerald-100 text-emerald-600';
-            break;
-        case 'erro':
-            iconClass = 'fa-circle-xmark';
-            bgClass = 'bg-red-100 text-red-600';
-            break;
-        case 'aviso':
-            iconClass = 'fa-triangle-exclamation';
-            bgClass = 'bg-amber-100 text-amber-600';
-            break;
+    // Define cores e ícones por tipo
+    let headerClass = 'bg-blue-50';
+    let iconBgClass = 'bg-blue-100';
+    let iconClass = 'fa-circle-info text-blue-600';
+    
+    if (tipo === 'sucesso') {
+        headerClass = 'bg-emerald-50';
+        iconBgClass = 'bg-emerald-100';
+        iconClass = 'fa-circle-check text-emerald-600';
+    } else if (tipo === 'erro') {
+        headerClass = 'bg-red-50';
+        iconBgClass = 'bg-red-100';
+        iconClass = 'fa-circle-xmark text-red-600';
+    } else if (tipo === 'aviso') {
+        headerClass = 'bg-amber-50';
+        iconBgClass = 'bg-amber-100';
+        iconClass = 'fa-triangle-exclamation text-amber-600';
     }
-
-    icone.className = `h-16 w-16 rounded-full flex items-center justify-center text-3xl ${bgClass}`;
-    icone.innerHTML = `<i class="fa-solid ${iconClass}"></i>`;
     
-    tituloEl.textContent = titulo;
-    mensagemEl.textContent = mensagem;
+    // Aplica estilos
+    header.className = 'px-6 py-4 flex items-center gap-3 ' + headerClass;
+    iconContainer.className = 'h-10 w-10 rounded-full flex items-center justify-center ' + iconBgClass;
+    icon.className = 'fa-solid ' + iconClass + ' text-xl';
     
-    // Botão OK
-    botoesEl.innerHTML = `
-        <button onclick="fecharAlerta()" class="btn-primary px-8">
-            OK
-        </button>
-    `;
-
+    // Define conteúdo
+    tituloEl.innerText = titulo;
+    mensagemEl.innerText = mensagem;
+    
+    // Botão padrão
+    botoesEl.innerHTML = '<button onclick="fecharAlerta()" class="flex-1 bg-slate-800 hover:bg-slate-900 text-white py-2.5 px-4 rounded-xl font-bold transition">OK</button>';
+    
+    // Mostra modal
     modal.classList.remove('hidden');
 }
 
-/**
- * Exibe uma confirmação do sistema
- * @param {string} titulo - Título
- * @param {string} mensagem - Mensagem
- * @param {function} callback - Função executada ao confirmar
- */
-function sysConfirm(titulo, mensagem, callback) {
+function sysConfirm(titulo, mensagem, onConfirm) {
     const modal = document.getElementById('modalAlerta');
-    const icone = document.getElementById('alertaIcone');
+    const header = document.getElementById('alertaHeader');
+    const iconContainer = document.getElementById('alertaIconContainer');
+    const icon = document.getElementById('alertaIcon');
     const tituloEl = document.getElementById('alertaTitulo');
     const mensagemEl = document.getElementById('alertaMensagem');
     const botoesEl = document.getElementById('alertaBotoes');
-
-    icone.className = 'h-16 w-16 rounded-full flex items-center justify-center text-3xl bg-amber-100 text-amber-600';
-    icone.innerHTML = '<i class="fa-solid fa-question"></i>';
     
-    tituloEl.textContent = titulo;
-    mensagemEl.textContent = mensagem;
+    // Estilo de confirmação
+    header.className = 'px-6 py-4 flex items-center gap-3 bg-blue-50';
+    iconContainer.className = 'h-10 w-10 rounded-full flex items-center justify-center bg-blue-100';
+    icon.className = 'fa-solid fa-circle-question text-blue-600 text-xl';
     
-    confirmCallback = callback;
+    // Define conteúdo
+    tituloEl.innerText = titulo;
+    mensagemEl.innerText = mensagem;
     
-    botoesEl.innerHTML = `
-        <button onclick="fecharAlerta()" class="btn-secondary px-6">
-            Cancelar
-        </button>
-        <button onclick="executarConfirm()" class="btn-primary px-6">
-            Confirmar
-        </button>
-    `;
-
+    // Botões de confirmação
+    botoesEl.innerHTML = 
+        '<button onclick="fecharAlerta()" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 py-2.5 px-4 rounded-xl font-bold transition">Cancelar</button>' +
+        '<button id="btnConfirmAction" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 px-4 rounded-xl font-bold transition">Confirmar</button>';
+    
+    // Evento de confirmação
+    document.getElementById('btnConfirmAction').onclick = function() {
+        fecharAlerta();
+        if (typeof onConfirm === 'function') onConfirm();
+    };
+    
+    // Mostra modal
     modal.classList.remove('hidden');
 }
 
 function fecharAlerta() {
-    document.getElementById('modalAlerta').classList.add('hidden');
-    confirmCallback = null;
+    const modal = document.getElementById('modalAlerta');
+    if (modal) modal.classList.add('hidden');
 }
 
-function executarConfirm() {
-    fecharAlerta();
-    if (confirmCallback && typeof confirmCallback === 'function') {
-        confirmCallback();
-    }
+function fecharModalDinamico(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) modal.remove();
 }
 
 // =============================================================================
-// 7. UTILITÁRIOS - FORMATAÇÃO DE MOEDA
+// API - COMUNICAÇÃO COM BACKEND
 // =============================================================================
 
-/**
- * Converte string monetária BR para número
- * Ex: "R$ 1.234,56" -> 1234.56
- */
-function parseMoney(valor) {
-    if (typeof valor === 'number') return valor;
-    if (!valor) return 0;
+function apiGet(action, callback, params) {
+    let url = API_BASE_URL + '?action=' + action;
     
-    let str = String(valor)
-        .replace('R$', '')
+    if (params) {
+        Object.keys(params).forEach(function(key) {
+            url += '&' + key + '=' + encodeURIComponent(params[key]);
+        });
+    }
+    
+    fetch(url)
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(data) {
+            if (typeof callback === 'function') callback(data);
+        })
+        .catch(function(error) {
+            console.error('Erro na API (GET):', error);
+            if (typeof callback === 'function') callback(null);
+        });
+}
+
+function apiPost(action, dados, callback) {
+    const url = API_BASE_URL;
+    
+    const payload = {
+        action: action,
+        dados: dados
+    };
+    
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+    })
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(data) {
+            if (typeof callback === 'function') callback(data);
+        })
+        .catch(function(error) {
+            console.error('Erro na API (POST):', error);
+            if (typeof callback === 'function') callback({ success: false, message: 'Erro de conexão' });
+        });
+}
+
+// =============================================================================
+// COMPATIBILIDADE COM google.script.run
+// =============================================================================
+
+const google = {
+    script: {
+        run: {
+            withSuccessHandler: function(callback) {
+                return {
+                    withFailureHandler: function(errorCallback) {
+                        return criarProxyAPI(callback, errorCallback);
+                    },
+                    // Métodos diretos (sem withFailureHandler)
+                    ...criarProxyAPI(callback, function(err) { console.error(err); })
+                };
+            }
+        }
+    }
+};
+
+function criarProxyAPI(successCallback, errorCallback) {
+    const handler = {};
+    
+    // Lista de todas as funções do backend
+    const funcoes = [
+        // Configurações
+        'getConfiguracoes', 'buscarConfiguracoes', 'salvarConfiguracoes',
+        // Recursos
+        'getRecursos', 'addRecurso', 'removeRecurso',
+        // Recolhimento
+        'buscarGuias', 'salvarGuia', 'excluirGuia',
+        // IRRF
+        'getOrigensIR', 'addOrigemIR', 'removeOrigemIR',
+        'buscarIRRF', 'salvarIRRF', 'excluirIRRF',
+        // Previdência
+        'getOrigensPrev', 'addOrigemPrev', 'removeOrigemPrev',
+        'buscarPrevMunicipal', 'salvarPrevMunicipal', 'excluirPrevMunicipal',
+        // Consignados
+        'getBancosConsig', 'addBancoConsig', 'removeBancoConsig',
+        'buscarConsignados', 'salvarConsignado', 'excluirConsignado',
+        // Folha
+        'getNomesFolha', 'addNomeFolha', 'removeNomeFolha',
+        'buscarFolhas', 'salvarFolha', 'excluirFolha',
+        'buscarTodosServidores', 'buscarRemessasOutrosBancos', 
+        'salvarRemessaOutroBanco', 'excluirRemessaOutroBanco', 'importarRemessasAnteriores',
+        // Despesas
+        'buscarFornecedores', 'salvarFornecedor', 'excluirFornecedor',
+        'buscarHistoricoDespesas', 'salvarDespesa', 'editarDespesa', 'excluirDespesa',
+        // Pagamentos
+        'buscarPagamentos', 'processarPagamento', 'processarPagamentoEmLote',
+        'buscarHistoricoPagamentos', 'buscarTodosPagamentosRealizados', 
+        'excluirPagamentoRealizado', 'buscarDetalhesPagamento',
+        // Margem
+        'salvarServidor', 'buscarHistoricoMargem', 'gerarCartaMargem', 'regerarPDFMargem',
+        // Arquivos
+        'getTiposArquivo', 'addTipoArquivo', 'removeTipoArquivo',
+        'buscarArquivosDigitais', 'uploadArquivoDigital', 'excluirArquivoDigital',
+        // Relatórios
+        'gerarRelatorioBI', 'exportarRelatorioParaPlanilha',
+        // Dashboard
+        'carregarDadosDashboard', 'exportarDashboardParaPlanilha',
+        'buscarUltimasTransacoes', 'buscarProximosVencimentos',
+        // Importação
+        'importarDadosEmLote'
+    ];
+    
+    funcoes.forEach(function(funcao) {
+        handler[funcao] = function() {
+            const args = Array.prototype.slice.call(arguments);
+            
+            // Determina se é GET ou POST baseado no nome da função
+            const isPost = funcao.startsWith('salvar') || 
+                          funcao.startsWith('excluir') || 
+                          funcao.startsWith('processar') ||
+                          funcao.startsWith('importar') ||
+                          funcao.startsWith('add') ||
+                          funcao.startsWith('remove') ||
+                          funcao.startsWith('editar') ||
+                          funcao.startsWith('upload') ||
+                          funcao.startsWith('gerar') ||
+                          funcao.startsWith('regerar') ||
+                          funcao.startsWith('exportar');
+            
+            if (isPost) {
+                apiPost(funcao, args[0], function(response) {
+                    if (response && response.success !== undefined) {
+                        successCallback(response);
+                    } else if (response && response.error) {
+                        errorCallback(response.error);
+                    } else {
+                        successCallback(response);
+                    }
+                });
+            } else {
+                const params = {};
+                if (args.length > 0) params.param1 = args[0];
+                if (args.length > 1) params.param2 = args[1];
+                
+                apiGet(funcao, function(response) {
+                    if (response !== null) {
+                        successCallback(response);
+                    } else {
+                        errorCallback('Erro ao buscar dados');
+                    }
+                }, params);
+            }
+        };
+    });
+    
+    return handler;
+}
+
+// =============================================================================
+// UTILITÁRIOS DE FORMATAÇÃO
+// =============================================================================
+
+function formatMoney(valor) {
+    if (valor === null || valor === undefined || isNaN(valor)) valor = 0;
+    return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function parseMoney(valor) {
+    if (!valor) return 0;
+    if (typeof valor === 'number') return valor;
+    
+    // Remove R$, espaços e pontos de milhar, troca vírgula por ponto
+    let limpo = String(valor)
+        .replace(/R\$\s?/g, '')
         .replace(/\s/g, '')
         .replace(/\./g, '')
         .replace(',', '.');
     
-    const num = parseFloat(str);
+    const num = parseFloat(limpo);
     return isNaN(num) ? 0 : num;
 }
 
-/**
- * Formata número para moeda BR
- * Ex: 1234.56 -> "R$ 1.234,56"
- */
-function formatMoney(valor) {
-    if (typeof valor !== 'number') valor = parseFloat(valor) || 0;
-    return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-}
-
-/**
- * Arredonda valor monetário para 2 casas decimais
- */
 function roundMoney(valor) {
-    return Math.round((valor + Number.EPSILON) * 100) / 100;
+    return Math.round(valor * 100) / 100;
 }
 
-// =============================================================================
-// 8. UTILITÁRIOS - FORMATAÇÃO DE DATA
-// =============================================================================
-
-/**
- * Formata data para exibição BR (DD/MM/AAAA)
- */
-function formatarDataBR(data) {
-    if (!data) return '-';
-    
-    let d;
-    if (data instanceof Date) {
-        d = data;
-    } else if (typeof data === 'string') {
-        // Tenta parsear diferentes formatos
-        if (data.includes('/')) {
-            // Já está no formato BR
-            return data;
-        }
-        d = new Date(data);
-    } else {
-        d = new Date(data);
-    }
-    
-    if (isNaN(d.getTime())) return '-';
-    
-    const dia = String(d.getDate()).padStart(2, '0');
-    const mes = String(d.getMonth() + 1).padStart(2, '0');
-    const ano = d.getFullYear();
-    
-    return `${dia}/${mes}/${ano}`;
-}
-
-/**
- * Formata competência para exibição (YYYY-MM -> MM/YYYY)
- */
 function formatarCompetencia(comp) {
     if (!comp) return '-';
     
-    let str = String(comp).replace(/'/g, '').trim();
-    
-    // Se já está no formato MM/YYYY
-    if (str.match(/^\d{2}\/\d{4}$/)) return str;
-    
-    // Se está no formato YYYY-MM
-    if (str.match(/^\d{4}-\d{2}/)) {
-        const partes = str.split('-');
-        return `${partes[1]}/${partes[0]}`;
+    // Se for Date
+    if (comp instanceof Date) {
+        const m = comp.getMonth() + 1;
+        const y = comp.getFullYear();
+        return String(m).padStart(2, '0') + '/' + y;
     }
     
-    // Se é Date object
-    if (comp instanceof Date) {
-        const mes = String(comp.getMonth() + 1).padStart(2, '0');
-        const ano = comp.getFullYear();
-        return `${mes}/${ano}`;
+    // Se for string YYYY-MM ou YYYY-MM-DD
+    const str = String(comp).replace(/'/g, '').trim();
+    
+    if (str.match(/^\d{4}-\d{2}/)) {
+        const partes = str.split('-');
+        return partes[1] + '/' + partes[0];
+    }
+    
+    return str;
+}
+
+function formatarDataBR(data) {
+    if (!data) return '-';
+    
+    // Se for Date
+    if (data instanceof Date) {
+        const d = String(data.getDate()).padStart(2, '0');
+        const m = String(data.getMonth() + 1).padStart(2, '0');
+        const y = data.getFullYear();
+        return d + '/' + m + '/' + y;
+    }
+    
+    // Se for string ISO
+    const str = String(data).trim();
+    
+    if (str.match(/^\d{4}-\d{2}-\d{2}/)) {
+        const partes = str.substring(0, 10).split('-');
+        return partes[2] + '/' + partes[1] + '/' + partes[0];
     }
     
     return str;
 }
 
 // =============================================================================
-// 9. UTILITÁRIOS - MÁSCARAS DE INPUT
+// MÁSCARAS DE INPUT
 // =============================================================================
 
-/**
- * Aplica máscara de moeda em tempo real
- */
-function aplicarMascaraMoeda(input) {
-    let valor = input.value.replace(/\D/g, '');
+function configurarMascaras() {
+    // Máscara de dinheiro
+    document.querySelectorAll('.mask-money').forEach(function(input) {
+        input.addEventListener('input', function(e) {
+            let valor = e.target.value.replace(/\D/g, '');
+            valor = (parseInt(valor) / 100).toFixed(2);
+            if (isNaN(valor) || valor === 'NaN') valor = '0.00';
+            e.target.value = formatMoney(parseFloat(valor));
+        });
+        
+        input.addEventListener('focus', function(e) {
+            if (e.target.value === 'R$ 0,00') e.target.value = '';
+        });
+        
+        input.addEventListener('blur', function(e) {
+            if (e.target.value === '') e.target.value = 'R$ 0,00';
+        });
+    });
     
-    if (valor === '') {
-        input.value = '';
-        return;
-    }
+    // Máscara de CPF
+    document.querySelectorAll('.mask-cpf').forEach(function(input) {
+        input.addEventListener('input', function(e) {
+            let valor = e.target.value.replace(/\D/g, '');
+            if (valor.length > 11) valor = valor.substring(0, 11);
+            
+            if (valor.length > 9) {
+                valor = valor.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, '$1.$2.$3-$4');
+            } else if (valor.length > 6) {
+                valor = valor.replace(/(\d{3})(\d{3})(\d{1,3})/, '$1.$2.$3');
+            } else if (valor.length > 3) {
+                valor = valor.replace(/(\d{3})(\d{1,3})/, '$1.$2');
+            }
+            
+            e.target.value = valor;
+        });
+    });
     
-    valor = (parseInt(valor) / 100).toFixed(2);
-    valor = valor.replace('.', ',');
-    valor = valor.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    // Máscara de CNPJ
+    document.querySelectorAll('.mask-cnpj').forEach(function(input) {
+        input.addEventListener('input', function(e) {
+            let valor = e.target.value.replace(/\D/g, '');
+            if (valor.length > 14) valor = valor.substring(0, 14);
+            
+            if (valor.length > 12) {
+                valor = valor.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{1,2})/, '$1.$2.$3/$4-$5');
+            } else if (valor.length > 8) {
+                valor = valor.replace(/(\d{2})(\d{3})(\d{3})(\d{1,4})/, '$1.$2.$3/$4');
+            } else if (valor.length > 5) {
+                valor = valor.replace(/(\d{2})(\d{3})(\d{1,3})/, '$1.$2.$3');
+            } else if (valor.length > 2) {
+                valor = valor.replace(/(\d{2})(\d{1,3})/, '$1.$2');
+            }
+            
+            e.target.value = valor;
+        });
+    });
     
-    input.value = 'R$ ' + valor;
+    // Máscara de telefone
+    document.querySelectorAll('.mask-telefone').forEach(function(input) {
+        input.addEventListener('input', function(e) {
+            let valor = e.target.value.replace(/\D/g, '');
+            if (valor.length > 11) valor = valor.substring(0, 11);
+            
+            if (valor.length > 10) {
+                valor = valor.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+            } else if (valor.length > 6) {
+                valor = valor.replace(/(\d{2})(\d{4})(\d{1,4})/, '($1) $2-$3');
+            } else if (valor.length > 2) {
+                valor = valor.replace(/(\d{2})(\d{1,5})/, '($1) $2');
+            }
+            
+            e.target.value = valor;
+        });
+    });
 }
-
-/**
- * Aplica máscara de CPF
- */
-function aplicarMascaraCPF(input) {
-    let valor = input.value.replace(/\D/g, '');
-    
-    if (valor.length > 11) valor = valor.substring(0, 11);
-    
-    valor = valor.replace(/(\d{3})(\d)/, '$1.$2');
-    valor = valor.replace(/(\d{3})(\d)/, '$1.$2');
-    valor = valor.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-    
-    input.value = valor;
-}
-
-/**
- * Aplica máscara de CNPJ
- */
-function aplicarMascaraCNPJ(input) {
-    let valor = input.value.replace(/\D/g, '');
-    
-    if (valor.length > 14) valor = valor.substring(0, 14);
-    
-    valor = valor.replace(/(\d{2})(\d)/, '$1.$2');
-    valor = valor.replace(/(\d{3})(\d)/, '$1.$2');
-    valor = valor.replace(/(\d{3})(\d)/, '$1/$2');
-    valor = valor.replace(/(\d{4})(\d{1,2})$/, '$1-$2');
-    
-    input.value = valor;
-}
-
-/**
- * Aplica máscara de telefone
- */
-function aplicarMascaraTelefone(input) {
-    let valor = input.value.replace(/\D/g, '');
-    
-    if (valor.length > 11) valor = valor.substring(0, 11);
-    
-    if (valor.length <= 10) {
-        valor = valor.replace(/(\d{2})(\d)/, '($1) $2');
-        valor = valor.replace(/(\d{4})(\d)/, '$1-$2');
-    } else {
-        valor = valor.replace(/(\d{2})(\d)/, '($1) $2');
-        valor = valor.replace(/(\d{5})(\d)/, '$1-$2');
-    }
-    
-    input.value = valor;
-}
-
-// Listener global para máscaras
-document.addEventListener('input', function(e) {
-    if (e.target.classList.contains('mask-money')) {
-        aplicarMascaraMoeda(e.target);
-    }
-    if (e.target.classList.contains('mask-cpf')) {
-        aplicarMascaraCPF(e.target);
-    }
-    if (e.target.classList.contains('mask-cnpj')) {
-        aplicarMascaraCNPJ(e.target);
-    }
-    if (e.target.classList.contains('mask-telefone')) {
-        aplicarMascaraTelefone(e.target);
-    }
-});
 
 // =============================================================================
-// 10. UTILITÁRIOS GERAIS
+// CONFIGURAÇÕES - PÁGINA CONFIG
 // =============================================================================
 
-/**
- * Debounce para otimizar chamadas frequentes
- */
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
+function carregarDadosConfig() {
+    // Carrega configurações do instituto
+    buscarConfiguracoes(function(config) {
+        if (config) {
+            document.getElementById('configNomeInstituto').value = config.nome || '';
+            document.getElementById('configCnpjInstituto').value = config.cnpj || '';
+            document.getElementById('configEnderecoInstituto').value = config.endereco || '';
+            document.getElementById('configCidadeInstituto').value = config.cidade || '';
+            document.getElementById('configUfInstituto').value = config.uf || '';
+            document.getElementById('configTelefoneInstituto').value = config.telefone || '';
+            document.getElementById('configEmailInstituto').value = config.email || '';
+        }
+    });
+    
+    // Carrega listas de cadastros auxiliares
+    if (typeof carregarListaRecursos === 'function') carregarListaRecursos();
+    if (typeof carregarListaOrigensIR === 'function') carregarListaOrigensIR();
+    if (typeof carregarListaNomesFolha === 'function') carregarListaNomesFolha();
+    if (typeof carregarListaBancosConsig === 'function') carregarListaBancosConsig();
+    if (typeof carregarListaOrigensPrev === 'function') carregarListaOrigensPrev();
+}
+
+function salvarConfiguracoes(e) {
+    e.preventDefault();
+    
+    const dados = {
+        nome: document.getElementById('configNomeInstituto').value,
+        cnpj: document.getElementById('configCnpjInstituto').value,
+        endereco: document.getElementById('configEnderecoInstituto').value,
+        cidade: document.getElementById('configCidadeInstituto').value,
+        uf: document.getElementById('configUfInstituto').value,
+        telefone: document.getElementById('configTelefoneInstituto').value,
+        email: document.getElementById('configEmailInstituto').value
     };
-}
-
-/**
- * Copia texto para área de transferência
- */
-async function copiarParaClipboard(texto) {
-    try {
-        await navigator.clipboard.writeText(texto);
-        sysAlert('Copiado!', 'Texto copiado para a área de transferência.', 'sucesso');
-    } catch (err) {
-        console.error('Erro ao copiar:', err);
-        sysAlert('Erro', 'Não foi possível copiar o texto.', 'erro');
-    }
-}
-
-/**
- * Gera ID único simples
- */
-function gerarIdLocal() {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2);
-}
-
-// =============================================================================
-// 11. INICIALIZAÇÃO DO SISTEMA
-// =============================================================================
-
-async function initSistema() {
-    console.log('🚀 Iniciando Sistema RPPS...');
     
-    try {
-        // Atualiza data no header
-        const dataHeader = document.getElementById('dataAtualHeader');
-        if (dataHeader) {
-            dataHeader.textContent = new Date().toLocaleDateString('pt-BR');
+    toggleLoading(true);
+    
+    apiPost('salvarConfiguracoes', dados, function(res) {
+        toggleLoading(false);
+        
+        if (res && res.success) {
+            sysAlert('Sucesso', 'Configurações salvas com sucesso!', 'sucesso');
+            configCache = null; // Limpa cache para recarregar
+            carregarConfiguracoes();
+        } else {
+            sysAlert('Erro', res ? res.message : 'Erro ao salvar configurações.', 'erro');
         }
-        
-        // Atualiza saudação
-        const saudacao = document.getElementById('saudacaoHeader');
-        if (saudacao) {
-            const hora = new Date().getHours();
-            let texto = 'Bom dia';
-            if (hora >= 12 && hora < 18) texto = 'Boa tarde';
-            else if (hora >= 18) texto = 'Boa noite';
-            saudacao.textContent = `${texto}! Bem-vindo ao sistema.`;
-        }
-        
-        // Carrega configurações do instituto
-        await carregarConfigSidebar();
-        
-        // Remove loading inicial
-        const pageLoading = document.getElementById('page-loading');
-        if (pageLoading) {
-            pageLoading.remove();
-        }
-        
-        // Exibe página inicial
-        showPage('page-guia-rapido');
-        
-        console.log('✅ Sistema iniciado com sucesso!');
-        
-    } catch (error) {
-        console.error('❌ Erro na inicialização:', error);
-        sysAlert('Erro', 'Ocorreu um erro ao iniciar o sistema. Recarregue a página.', 'erro');
-    }
-}
-
-/**
- * Carrega configurações do instituto para o sidebar
- */
-async function carregarConfigSidebar() {
-    try {
-        const result = await apiPost('buscarConfiguracoes');
-        
-        if (result && result.success !== false) {
-            const config = result.data || result;
-            
-            // Atualiza nome no sidebar
-            const nomeEl = document.getElementById('sidebarNome');
-            if (nomeEl && config.nome) {
-                nomeEl.textContent = config.nome;
-            }
-            
-            // Atualiza CNPJ
-            const cnpjEl = document.getElementById('sidebarCNPJ');
-            if (cnpjEl && config.cnpj) {
-                cnpjEl.textContent = config.cnpj;
-            }
-            
-            // Atualiza logo
-            if (config.urlLogo && config.urlLogo.trim() !== '') {
-                const logoImg = document.getElementById('sidebarLogo');
-                const logoIcon = document.getElementById('sidebarLogoIcon');
-                
-                if (logoImg && logoIcon) {
-                    logoImg.src = config.urlLogo;
-                    logoImg.classList.remove('hidden');
-                    logoIcon.classList.add('hidden');
-                }
-            }
-        }
-    } catch (error) {
-        console.warn('Não foi possível carregar configurações do sidebar:', error);
-    }
+    });
 }
 
 // =============================================================================
-// 12. EVENT LISTENERS GLOBAIS
+// EXPORTAÇÃO GLOBAL
 // =============================================================================
 
-// Fecha modal ao pressionar ESC
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        // Fecha alertas
-        const modalAlerta = document.getElementById('modalAlerta');
-        if (modalAlerta && !modalAlerta.classList.contains('hidden')) {
-            fecharAlerta();
-        }
-        
-        // Fecha modal de pagamento
-        const modalPagamento = document.getElementById('modalPagamento');
-        if (modalPagamento && !modalPagamento.classList.contains('hidden')) {
-            closeModal();
-        }
-    }
-});
-
-// Fecha sidebar ao redimensionar para desktop
-window.addEventListener('resize', function() {
-    if (window.innerWidth >= 1024) {
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('sidebarOverlay');
-        if (sidebar) sidebar.classList.remove('-translate-x-full');
-        if (overlay) overlay.classList.add('hidden');
-    }
-});
-
-// Handler para erros não capturados
-window.addEventListener('unhandledrejection', function(event) {
-    console.error('Promise não tratada:', event.reason);
-});
-
-// =============================================================================
-// 13. FUNÇÕES AUXILIARES PARA MODAL DE PAGAMENTO
-// =============================================================================
-
-function closeModal() {
-    const modal = document.getElementById('modalPagamento');
-    if (modal) {
-        modal.classList.add('hidden');
-    }
-}
-
-// =============================================================================
-// 14. EXPORTAÇÃO PARA ESCOPO GLOBAL
-// =============================================================================
-
-// Garante que as funções estejam disponíveis globalmente
-window.showPage = showPage;
+window.initSistema = initSistema;
+window.carregarPagina = carregarPagina;
 window.toggleSidebar = toggleSidebar;
+window.closeSidebar = closeSidebar;
 window.toggleLoading = toggleLoading;
 window.sysAlert = sysAlert;
 window.sysConfirm = sysConfirm;
 window.fecharAlerta = fecharAlerta;
-window.executarConfirm = executarConfirm;
-window.closeModal = closeModal;
-window.parseMoney = parseMoney;
+window.fecharModalDinamico = fecharModalDinamico;
 window.formatMoney = formatMoney;
+window.parseMoney = parseMoney;
 window.roundMoney = roundMoney;
-window.formatarDataBR = formatarDataBR;
 window.formatarCompetencia = formatarCompetencia;
-window.apiCall = apiCall;
+window.formatarDataBR = formatarDataBR;
 window.apiGet = apiGet;
 window.apiPost = apiPost;
-window.initSistema = initSistema;
-```
-
----
-
+window.buscarConfiguracoes = buscarConfiguracoes;
+window.carregarDadosConfig = carregarDadosConfig;
+window.salvarConfiguracoes = salvarConfiguracoes;
+window.google = google;
