@@ -3,386 +3,322 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Gestão RPPS</title>
+    <title>Sistema RPPS - Gestão Financeira</title>
     
-    <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏛️</text></svg>">
-    
-    <!-- Google Fonts - Inter -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    
-    <!-- Tailwind CSS (CDN) -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- CSS do Sistema -->
+    <!-- Estilos Customizados -->
     <link rel="stylesheet" href="css/styles.css">
 </head>
-<body class="bg-slate-100 font-sans antialiased">
+<body class="bg-slate-100 font-['Inter'] antialiased">
 
-    <!-- =========================================================================== -->
-    <!-- ESTRUTURA PRINCIPAL -->
-    <!-- =========================================================================== -->
-    
-    <div class="flex min-h-screen">
+    <!-- ========================================== -->
+    <!-- SIDEBAR -->
+    <!-- ========================================== -->
+    <aside id="sidebar" class="fixed left-0 top-0 h-full w-64 bg-gradient-to-b from-slate-900 to-slate-800 text-white z-40 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 shadow-2xl">
         
-        <!-- ======================================================================= -->
-        <!-- SIDEBAR (MENU LATERAL) -->
-        <!-- ======================================================================= -->
-        <aside id="sidebar" class="w-64 bg-slate-900 text-white flex flex-col fixed h-full z-40 transition-transform duration-300 lg:translate-x-0 -translate-x-full">
-            
-            <!-- Logo / Identificação -->
-            <div class="p-5 border-b border-slate-700/50">
-                <div class="flex items-center gap-3">
-                    <div id="sidebarLogoContainer" class="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
-                        <img id="sidebarLogo" src="" class="h-8 w-8 object-contain hidden rounded">
-                        <i id="sidebarLogoIcon" class="fa-solid fa-building-columns text-white text-lg"></i>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <h1 id="sidebarNome" class="text-sm font-bold truncate text-white">RPPS</h1>
-                        <p id="sidebarCNPJ" class="text-[10px] text-slate-400 truncate">Sistema de Gestão</p>
-                    </div>
-                </div>
+        <!-- Logo -->
+        <div class="p-6 border-b border-slate-700/50">
+            <div id="sidebarLogo" class="h-16 w-16 mx-auto rounded-xl bg-white/10 flex items-center justify-center mb-3 overflow-hidden">
+                <i class="fa-solid fa-building-columns text-3xl text-blue-400"></i>
             </div>
+            <h1 id="sidebarNome" class="text-center font-bold text-sm leading-tight">Instituto de Previdência</h1>
+            <p id="sidebarCnpj" class="text-center text-[10px] text-slate-400 mt-1">CNPJ: --</p>
+        </div>
+
+        <!-- Menu -->
+        <nav class="p-4 space-y-1 overflow-y-auto max-h-[calc(100vh-180px)]">
             
-            <!-- Menu de Navegação -->
-            <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-                
-                <!-- Início -->
-                <button onclick="showPage('page-guia-rapido')" id="menu-guia-rapido" class="menu-item w-full">
-                    <i class="fa-solid fa-house w-5"></i>
-                    <span>Início</span>
-                </button>
-                
-                <!-- Dashboard -->
-                <button onclick="showPage('page-dashboard')" id="menu-dashboard" class="menu-item w-full">
-                    <i class="fa-solid fa-chart-pie w-5"></i>
-                    <span>Dashboard</span>
-                </button>
-                
-                <!-- Divisor -->
-                <div class="pt-4 pb-2">
-                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-3">Receitas</p>
-                </div>
-                
-                <!-- Recolhimento -->
-                <button onclick="showPage('page-recolhimento')" id="menu-recolhimento" class="menu-item w-full">
-                    <i class="fa-solid fa-file-invoice-dollar w-5"></i>
-                    <span>Guias / Receitas</span>
-                </button>
-                
-                <!-- Previdência Municipal -->
-                <button onclick="showPage('page-prev-municipal')" id="menu-prev-municipal" class="menu-item w-full">
-                    <i class="fa-solid fa-piggy-bank w-5"></i>
-                    <span>Prev. Municipal</span>
-                </button>
-                
-                <!-- Imposto de Renda -->
-                <button onclick="showPage('page-imposto-renda')" id="menu-imposto-renda" class="menu-item w-full">
-                    <i class="fa-solid fa-scale-balanced w-5"></i>
-                    <span>Imposto Renda</span>
-                </button>
-                
-                <!-- Divisor -->
-                <div class="pt-4 pb-2">
-                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-3">Despesas</p>
-                </div>
-                
-                <!-- Folha de Pagamento -->
-                <button onclick="showPage('page-folha')" id="menu-folha" class="menu-item w-full">
-                    <i class="fa-solid fa-users-viewfinder w-5"></i>
-                    <span>Folha Pagamento</span>
-                </button>
-                
-                <!-- Despesas Administrativas -->
-                <button onclick="showPage('page-despesas')" id="menu-despesas" class="menu-item w-full">
-                    <i class="fa-solid fa-file-invoice w-5"></i>
-                    <span>Despesas Adm.</span>
-                </button>
-                
-                <!-- Consignados -->
-                <button onclick="showPage('page-consignados')" id="menu-consignados" class="menu-item w-full">
-                    <i class="fa-solid fa-file-contract w-5"></i>
-                    <span>Consignados</span>
-                </button>
-                
-                <!-- Divisor -->
-                <div class="pt-4 pb-2">
-                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-3">Financeiro</p>
-                </div>
-                
-                <!-- Pagamentos -->
-                <button onclick="showPage('page-pagamentos')" id="menu-pagamentos" class="menu-item w-full">
-                    <i class="fa-solid fa-money-bill-transfer w-5"></i>
-                    <span>Pagamentos</span>
-                </button>
-                
-                <!-- Margem -->
-                <button onclick="showPage('page-margem')" id="menu-margem" class="menu-item w-full">
-                    <i class="fa-solid fa-calculator w-5"></i>
-                    <span>Margem Consig.</span>
-                </button>
-                
-                <!-- Divisor -->
-                <div class="pt-4 pb-2">
-                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-3">Gestão</p>
-                </div>
-                
-                <!-- Relatórios -->
-                <button onclick="showPage('page-relatorios')" id="menu-relatorios" class="menu-item w-full">
-                    <i class="fa-solid fa-print w-5"></i>
-                    <span>Relatórios</span>
-                </button>
-                
-                <!-- Arquivos -->
-                <button onclick="showPage('page-arquivos')" id="menu-arquivos" class="menu-item w-full">
-                    <i class="fa-solid fa-folder-open w-5"></i>
-                    <span>Arquivos (GED)</span>
-                </button>
-                
-                <!-- Importação -->
-                <button onclick="showPage('page-importacao')" id="menu-importacao" class="menu-item w-full">
-                    <i class="fa-solid fa-file-import w-5"></i>
-                    <span>Importação</span>
-                </button>
-                
-                <!-- Divisor -->
-                <div class="pt-4 pb-2">
-                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-3">Sistema</p>
-                </div>
-                
-                <!-- Configurações -->
-                <button onclick="showPage('page-config')" id="menu-config" class="menu-item w-full">
-                    <i class="fa-solid fa-gear w-5"></i>
-                    <span>Configurações</span>
-                </button>
-                
-            </nav>
-            
-            <!-- Rodapé do Sidebar -->
-            <div class="p-4 border-t border-slate-700/50">
-                <p class="text-[10px] text-slate-500 text-center">
-                    Sistema RPPS v2.0<br>
-                    <span id="sidebarAno">2025</span>
-                </p>
+            <!-- Dashboard -->
+            <button onclick="carregarPagina('page-dashboard')" class="menu-item w-full" data-page="page-dashboard">
+                <i class="fa-solid fa-chart-pie w-5"></i>
+                <span>Dashboard</span>
+            </button>
+
+            <!-- Separator: Receitas -->
+            <div class="pt-4 pb-2">
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-3">Receitas</span>
             </div>
-        </aside>
+
+            <button onclick="carregarPagina('page-recolhimento')" class="menu-item w-full" data-page="page-recolhimento">
+                <i class="fa-solid fa-file-invoice-dollar w-5"></i>
+                <span>Recolhimento</span>
+            </button>
+
+            <button onclick="carregarPagina('page-imposto-renda')" class="menu-item w-full" data-page="page-imposto-renda">
+                <i class="fa-solid fa-scale-balanced w-5"></i>
+                <span>Imposto de Renda</span>
+            </button>
+
+            <button onclick="carregarPagina('page-prev-municipal')" class="menu-item w-full" data-page="page-prev-municipal">
+                <i class="fa-solid fa-piggy-bank w-5"></i>
+                <span>Prev. Municipal</span>
+            </button>
+
+            <button onclick="carregarPagina('page-consignados')" class="menu-item w-full" data-page="page-consignados">
+                <i class="fa-solid fa-file-contract w-5"></i>
+                <span>Consignados</span>
+            </button>
+
+            <!-- Separator: Despesas -->
+            <div class="pt-4 pb-2">
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-3">Despesas</span>
+            </div>
+
+            <button onclick="carregarPagina('page-folha')" class="menu-item w-full" data-page="page-folha">
+                <i class="fa-solid fa-users w-5"></i>
+                <span>Folha de Pagamento</span>
+            </button>
+
+            <button onclick="carregarPagina('page-despesas')" class="menu-item w-full" data-page="page-despesas">
+                <i class="fa-solid fa-file-invoice w-5"></i>
+                <span>Despesas Admin.</span>
+            </button>
+
+            <!-- Separator: Financeiro -->
+            <div class="pt-4 pb-2">
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-3">Financeiro</span>
+            </div>
+
+            <button onclick="carregarPagina('page-pagamentos')" class="menu-item w-full" data-page="page-pagamentos">
+                <i class="fa-solid fa-money-check-dollar w-5"></i>
+                <span>Pagamentos</span>
+            </button>
+
+            <button onclick="carregarPagina('page-margem')" class="menu-item w-full" data-page="page-margem">
+                <i class="fa-solid fa-calculator w-5"></i>
+                <span>Margem Consignável</span>
+            </button>
+
+            <!-- Separator: Gestão -->
+            <div class="pt-4 pb-2">
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-3">Gestão</span>
+            </div>
+
+            <button onclick="carregarPagina('page-arquivos')" class="menu-item w-full" data-page="page-arquivos">
+                <i class="fa-solid fa-folder-open w-5"></i>
+                <span>Arquivos Digitais</span>
+            </button>
+
+            <button onclick="carregarPagina('page-relatorios')" class="menu-item w-full" data-page="page-relatorios">
+                <i class="fa-solid fa-chart-bar w-5"></i>
+                <span>Relatórios</span>
+            </button>
+
+            <!-- Separator: Sistema -->
+            <div class="pt-4 pb-2">
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-3">Sistema</span>
+            </div>
+
+            <button onclick="carregarPagina('page-importacao')" class="menu-item w-full" data-page="page-importacao">
+                <i class="fa-solid fa-upload w-5"></i>
+                <span>Importação</span>
+            </button>
+
+            <button onclick="carregarPagina('page-config')" class="menu-item w-full" data-page="page-config">
+                <i class="fa-solid fa-gear w-5"></i>
+                <span>Configurações</span>
+            </button>
+
+        </nav>
+    </aside>
+
+    <!-- Overlay Mobile -->
+    <div id="sidebarOverlay" onclick="closeSidebar()" class="fixed inset-0 bg-black/50 z-30 hidden lg:hidden"></div>
+
+    <!-- ========================================== -->
+    <!-- MAIN CONTENT -->
+    <!-- ========================================== -->
+    <main class="lg:ml-64 min-h-screen">
         
-        <!-- ======================================================================= -->
-        <!-- ÁREA PRINCIPAL (CONTEÚDO) -->
-        <!-- ======================================================================= -->
-        <main class="flex-1 lg:ml-64 flex flex-col min-h-screen">
-            
-            <!-- Header Superior -->
-            <header class="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-sm">
-                
-                <!-- Botão Menu Mobile -->
-                <button onclick="toggleSidebar()" class="lg:hidden p-2 rounded-lg hover:bg-slate-100 transition">
-                    <i class="fa-solid fa-bars text-slate-600"></i>
-                </button>
-                
-                <!-- Saudação -->
-                <div class="hidden sm:block">
-                    <p class="text-sm text-slate-500" id="saudacaoHeader">Bem-vindo ao sistema</p>
-                </div>
-                
-                <!-- Ações do Header -->
-                <div class="flex items-center gap-3">
-                    <!-- Data Atual -->
-                    <div class="hidden md:flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-lg border border-slate-200">
-                        <i class="fa-regular fa-calendar text-slate-400 text-sm"></i>
-                        <span id="dataAtualHeader" class="text-xs font-medium text-slate-600">--/--/----</span>
+        <!-- Header -->
+        <header class="sticky top-0 z-20 bg-white/80 backdrop-blur-lg border-b border-slate-200 px-4 lg:px-8 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <!-- Mobile Menu Toggle -->
+                    <button onclick="toggleSidebar()" class="lg:hidden p-2 hover:bg-slate-100 rounded-lg transition">
+                        <i class="fa-solid fa-bars text-slate-600"></i>
+                    </button>
+                    <div>
+                        <p id="headerGreeting" class="text-sm text-slate-500">Bem-vindo</p>
+                        <p id="headerDate" class="text-xs text-slate-400"></p>
                     </div>
-                    
-                    <!-- Botão Atualizar -->
-                    <button onclick="location.reload()" class="p-2 rounded-lg hover:bg-slate-100 transition text-slate-500 hover:text-blue-600" title="Recarregar Sistema">
-                        <i class="fa-solid fa-rotate"></i>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="carregarPagina('page-dashboard')" class="p-2 hover:bg-slate-100 rounded-lg transition" title="Dashboard">
+                        <i class="fa-solid fa-home text-slate-500"></i>
                     </button>
                 </div>
-            </header>
-            
-            <!-- Container de Páginas -->
-            <div id="page-container" class="flex-1 p-6 overflow-y-auto">
-                
-                <!-- As páginas serão inseridas aqui via JavaScript -->
-                <div id="page-loading" class="flex flex-col items-center justify-center h-64">
-                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+            </div>
+        </header>
+
+        <!-- Page Container -->
+        <div id="pageContainer" class="p-4 lg:p-8">
+            <!-- Conteúdo dinâmico será carregado aqui -->
+            <div class="flex items-center justify-center h-64">
+                <div class="text-center">
+                    <i class="fa-solid fa-circle-notch fa-spin text-4xl text-blue-500 mb-4"></i>
                     <p class="text-slate-500">Carregando sistema...</p>
                 </div>
-                
             </div>
-            
-        </main>
-        
-    </div>
-    
-    <!-- =========================================================================== -->
-    <!-- LOADING OVERLAY (GLOBAL) -->
-    <!-- =========================================================================== -->
-    <div id="loading" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] flex items-center justify-center hidden">
-        <div class="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4">
-            <div class="relative">
-                <div class="animate-spin rounded-full h-16 w-16 border-4 border-blue-200"></div>
-                <div class="animate-spin rounded-full h-16 w-16 border-4 border-blue-600 border-t-transparent absolute inset-0"></div>
-            </div>
-            <p class="text-slate-600 font-medium">Processando...</p>
+        </div>
+
+    </main>
+
+    <!-- ========================================== -->
+    <!-- LOADING OVERLAY -->
+    <!-- ========================================== -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] hidden items-center justify-center">
+        <div class="text-center">
+            <div class="h-16 w-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p class="text-white font-bold">Processando...</p>
         </div>
     </div>
-    
-    <!-- =========================================================================== -->
-    <!-- MODAL DE ALERTA DO SISTEMA -->
-    <!-- =========================================================================== -->
-    <div id="modalAlerta" class="fixed inset-0 z-[90] overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="fixed inset-0 bg-slate-900/75 transition-opacity backdrop-blur-sm" onclick="fecharAlerta()"></div>
-        
-        <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
-            <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-md animate-modal-in">
-                
-                <!-- Ícone Dinâmico -->
-                <div class="flex justify-center pt-8">
-                    <div id="alertaIcone" class="h-16 w-16 rounded-full flex items-center justify-center text-3xl">
-                        <i class="fa-solid fa-circle-info"></i>
+
+    <!-- ========================================== -->
+    <!-- MODAL DE ALERTA -->
+    <!-- ========================================== -->
+    <div id="modalAlerta" class="fixed inset-0 z-[90] hidden">
+        <div class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm" onclick="fecharAlerta()"></div>
+        <div class="fixed inset-0 flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all animate-modal-in">
+                <div id="alertaHeader" class="px-6 py-4 flex items-center gap-3">
+                    <div id="alertaIconContainer" class="h-10 w-10 rounded-full flex items-center justify-center">
+                        <i id="alertaIcon" class="fa-solid fa-check text-xl"></i>
+                    </div>
+                    <h3 id="alertaTitulo" class="font-bold text-lg text-slate-800">Título</h3>
+                </div>
+                <div class="px-6 pb-6">
+                    <p id="alertaMensagem" class="text-slate-600 mb-6 whitespace-pre-line">Mensagem</p>
+                    <div id="alertaBotoes" class="flex gap-3">
+                        <button onclick="fecharAlerta()" class="flex-1 bg-slate-800 hover:bg-slate-900 text-white py-2.5 px-4 rounded-xl font-bold transition">
+                            OK
+                        </button>
                     </div>
                 </div>
-                
-                <!-- Conteúdo -->
-                <div class="px-8 pt-4 pb-6 text-center">
-                    <h3 id="alertaTitulo" class="text-xl font-bold text-slate-800 mb-2">Título</h3>
-                    <p id="alertaMensagem" class="text-sm text-slate-600 whitespace-pre-line">Mensagem do alerta.</p>
-                </div>
-                
-                <!-- Botões -->
-                <div id="alertaBotoes" class="bg-slate-50 px-6 py-4 flex justify-center gap-3 border-t border-slate-100">
-                    <!-- Botões dinâmicos via JS -->
-                </div>
             </div>
         </div>
     </div>
-    
-    <!-- =========================================================================== -->
+
+    <!-- ========================================== -->
     <!-- MODAL DE PAGAMENTO -->
-    <!-- =========================================================================== -->
-    <div id="modalPagamento" class="fixed inset-0 z-[80] overflow-y-auto hidden" aria-modal="true">
+    <!-- ========================================== -->
+    <div id="modalPagamento" class="fixed inset-0 z-[90] hidden">
         <div class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm" onclick="closeModal()"></div>
-        
-        <div class="flex min-h-full items-center justify-center p-4">
-            <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-modal-in">
-                
-                <!-- Header do Modal -->
-                <div class="bg-gradient-to-r from-emerald-600 to-emerald-700 px-6 py-5 text-white">
-                    <div class="flex items-center gap-4">
-                        <div class="h-12 w-12 rounded-xl bg-white/20 flex items-center justify-center">
-                            <i class="fa-solid fa-money-bill-wave text-xl"></i>
-                        </div>
+        <div class="fixed inset-0 flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+                <!-- Header -->
+                <div class="bg-gradient-to-r from-emerald-600 to-emerald-500 px-6 py-4 text-white">
+                    <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-xs text-emerald-200 uppercase tracking-widest font-bold">Competência</p>
-                            <h3 id="modalCompetencia" class="text-2xl font-black">--/----</h3>
+                            <p class="text-xs text-emerald-100 uppercase tracking-wide font-bold">Registrar Pagamento</p>
+                            <h3 id="modalNomeGuia" class="font-bold text-lg">Nome da Guia</h3>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs text-emerald-100">Competência</p>
+                            <p id="modalCompetencia" class="font-bold">00/0000</p>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Corpo do Modal -->
-                <div class="px-6 py-6">
+                <!-- Body -->
+                <form onsubmit="confirmarPagamento(event)" class="p-6 space-y-4">
                     <input type="hidden" id="modalIdHidden">
                     
-                    <!-- Nome da Guia/Despesa -->
-                    <div class="mb-4">
-                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Referência</p>
-                        <p id="modalNomeGuia" class="text-lg font-bold text-slate-800">Nome do Item</p>
-                    </div>
-                    
                     <!-- Valores -->
-                    <div class="grid grid-cols-2 gap-4 mb-6">
-                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase">Valor Total</p>
-                            <p id="modalValorTotal" class="text-xl font-black text-slate-800">R$ 0,00</p>
+                    <div class="grid grid-cols-2 gap-4 p-4 bg-slate-50 rounded-xl">
+                        <div>
+                            <p class="text-xs text-slate-500 uppercase font-bold">Valor Total</p>
+                            <p id="modalValorTotal" class="text-lg font-black text-slate-700 font-mono">R$ 0,00</p>
                         </div>
-                        <div class="bg-red-50 p-4 rounded-xl border border-red-100">
-                            <p class="text-[10px] font-bold text-red-400 uppercase">Saldo Restante</p>
-                            <p id="modalSaldoRestante" class="text-xl font-black text-red-600">R$ 0,00</p>
+                        <div>
+                            <p class="text-xs text-slate-500 uppercase font-bold">Saldo Restante</p>
+                            <p id="modalSaldoRestante" class="text-lg font-black text-emerald-600 font-mono">R$ 0,00</p>
                         </div>
                     </div>
                     
-                    <!-- Formulário -->
-                    <form onsubmit="confirmarPagamento(event)">
-                        <div class="grid grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <label class="label-padrao">Data do Pagamento</label>
-                                <input type="date" id="modalData" required class="input-padrao">
-                            </div>
-                            <div>
-                                <label class="label-padrao">Valor a Pagar (R$)</label>
-                                <input type="text" id="modalValorPago" required class="input-padrao mask-money font-bold text-emerald-600">
-                            </div>
+                    <!-- Inputs -->
+                    <div>
+                        <label class="label-padrao">Data do Pagamento *</label>
+                        <input type="date" id="modalData" class="input-padrao" required>
+                    </div>
+                    
+                    <div>
+                        <label class="label-padrao">Valor Pago *</label>
+                        <input type="text" id="modalValorPago" class="input-padrao mask-money" required>
+                    </div>
+                    
+                    <!-- Mini Histórico -->
+                    <div class="border border-slate-200 rounded-lg overflow-hidden">
+                        <div class="bg-slate-100 px-3 py-2 text-xs font-bold text-slate-600 uppercase">
+                            Histórico de Pagamentos
                         </div>
-                        
-                        <!-- Histórico Mini -->
-                        <div class="mb-4">
-                            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Pagamentos Anteriores</p>
-                            <div class="max-h-32 overflow-y-auto border border-slate-200 rounded-lg">
-                                <table class="w-full text-sm">
-                                    <tbody id="historicoPagamentosBody" class="divide-y divide-slate-100">
-                                        <tr><td colspan="2" class="p-3 text-center text-slate-400 text-xs">Nenhum pagamento anterior.</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
+                        <div class="max-h-24 overflow-y-auto">
+                            <table class="w-full text-xs">
+                                <tbody id="historicoPagamentosBody">
+                                    <tr><td colspan="2" class="p-3 text-center text-slate-400">Nenhum pagamento anterior.</td></tr>
+                                </tbody>
+                            </table>
                         </div>
-                        
-                        <!-- Botões -->
-                        <div class="flex gap-3 pt-4 border-t border-slate-100">
-                            <button type="button" onclick="closeModal()" class="btn-secondary flex-1">
-                                <i class="fa-solid fa-xmark mr-2"></i> Cancelar
-                            </button>
-                            <button type="submit" class="btn-primary flex-1 bg-emerald-600 hover:bg-emerald-700 border-none">
-                                <i class="fa-solid fa-check mr-2"></i> Confirmar
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                    </div>
+                    
+                    <!-- Botões -->
+                    <div class="flex gap-3 pt-2">
+                        <button type="button" onclick="closeModal()" class="flex-1 btn-secondary">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="flex-1 btn-primary bg-emerald-600 hover:bg-emerald-700">
+                            <i class="fa-solid fa-check mr-2"></i> Confirmar
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
-    
-    <!-- =========================================================================== -->
-    <!-- OVERLAY DO SIDEBAR MOBILE -->
-    <!-- =========================================================================== -->
-    <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-30 hidden lg:hidden" onclick="toggleSidebar()"></div>
-    
-    <!-- =========================================================================== -->
-    <!-- SCRIPTS DO SISTEMA -->
-    <!-- =========================================================================== -->
-    
-    <!-- Configuração da API -->
-    <script src="js/config.js"></script>
+
+    <!-- ========================================== -->
+    <!-- SCRIPTS -->
+    <!-- ========================================== -->
     
     <!-- Core do Sistema -->
     <script src="js/app.js"></script>
     
-    <!-- Módulos -->
-    <script src="js/modules-receitas.js"></script>
-    <script src="js/modules-despesas.js"></script>
-    <script src="js/modules-auxiliares.js"></script>
-    <script src="js/components.js"></script>
+    <!-- Módulos de Receitas -->
+    <script src="js/mod-recolhimento.js"></script>
+    <script src="js/mod-imposto-renda.js"></script>
+    <script src="js/mod-previdencia.js"></script>
+    <script src="js/mod-consignados.js"></script>
+    
+    <!-- Módulos de Despesas -->
+    <script src="js/mod-folha.js"></script>
+    <script src="js/mod-despesas.js"></script>
+    <script src="js/mod-pagamentos.js"></script>
+    
+    <!-- Módulos Auxiliares -->
+    <script src="js/mod-margem.js"></script>
+    <script src="js/mod-arquivos.js"></script>
+    <script src="js/mod-relatorios.js"></script>
+    <script src="js/mod-importacao.js"></script>
+    <script src="js/mod-dashboard.js"></script>
     
     <!-- Inicialização -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Atualiza ano no rodapé
-            document.getElementById('sidebarAno').textContent = new Date().getFullYear();
-            
-            // Inicializa o sistema
-            if (typeof initSistema === 'function') {
-                initSistema();
-            }
+            initSistema();
         });
     </script>
-    
+
 </body>
 </html>
